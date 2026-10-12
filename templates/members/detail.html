@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}
+  <button onclick="window.print()" class="btn-secondary btn-sm no-print">{% icon 'print' 'h-4 w-4' %} Print statement</button>
+  {% if can_finance %}<a href="{% url 'member_edit' member.pk %}" class="btn-secondary btn-sm">Edit</a><a href="{% url 'create_deposit' %}?member={{ member.pk }}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} Deposit</a>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="card card-body">
+    <div class="flex items-center gap-4"><span class="flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-lg font-bold text-white">{{ member.name|initials }}</span>
+      <div><div class="text-lg font-semibold text-stone-900">{{ member.name }}</div><div class="text-sm text-stone-500">{{ member.code }} · {{ member.society_designation }}</div></div></div>
+    <dl class="mt-5 space-y-2.5 text-sm">
+      <div class="flex justify-between"><dt class="text-stone-500">Mobile</dt><dd>{% if member.has_valid_phone %}{{ member.phone_number }}{% else %}<span class="text-rose-600">{{ member.phone_number }} (invalid)</span>{% endif %}</dd></div>
+      <div class="flex justify-between"><dt class="text-stone-500">Shares</dt><dd>{{ member.shares }}</dd></div>
+      <div class="flex justify-between"><dt class="text-stone-500">Joined</dt><dd>{{ member.joining_date|date:"d M Y" }}</dd></div>
+      <div class="flex justify-between"><dt class="text-stone-500">SMS</dt><dd>{% if member.sms_opt_in %}On{% else %}Opted out{% endif %}</dd></div>
+      <div><dt class="text-stone-500">Address</dt><dd class="mt-0.5">{{ member.address|default:"-" }}</dd></div>
+    </dl>
+    {% if can_finance %}
+    <div class="mt-5 border-t border-taupe-100 pt-4 no-print">
+      <div class="text-xs font-semibold uppercase tracking-wide text-stone-500">Member portal</div>
+      {% if member.user %}<p class="mt-1 text-sm">Login: <b>{{ member.user.username }}</b></p>{% else %}<p class="mt-1 text-sm text-stone-500">No login yet.</p>{% endif %}
+      <form method="post" action="{% url 'member_create_login' member.pk %}" class="mt-2 space-y-2" onsubmit="return confirm('{% if member.user %}Reset this member\'s password?{% else %}Create a portal login for this member?{% endif %}')">{% csrf_token %}
+        <label class="flex items-center gap-2 text-xs text-stone-600"><input type="checkbox" name="send_sms" value="1" class="ui-check"> Send login details by SMS</label>
+        <button class="btn-secondary btn-sm">{% if member.user %}Reset password{% else %}Create login{% endif %}</button></form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="space-y-6 lg:col-span-2">
+    <div class="grid gap-4 sm:grid-cols-3">
+      {% include "components/stat.html" with label="Expected" value=position.expected|taka0 %}
+      {% include "components/stat.html" with label="Paid" value=position.paid|taka0 tone="text-emerald-700" %}
+      {% if position.advance %}{% include "components/stat.html" with label="Advance paid" value=position.advance|taka0 tone="text-emerald-700" %}
+      {% else %}{% include "components/stat.html" with label="Due" value=position.due|taka0 tone="text-rose-700" %}{% endif %}
+    </div>
+    <div class="card card-body"><h2 class="card-title">Contribution status</h2>
+      <div class="table-wrap mt-3"><table class="tbl"><thead><tr><th>Contribution</th><th>Due date</th><th class="num">Expected</th><th class="num">Paid</th><th class="num">Due</th><th>Status</th></tr></thead>
+        <tbody>{% for r in plans %}<tr><td>{{ r.plan.description }}</td><td>{{ r.plan.end_date|date:"d M Y" }}</td><td class="num">{{ r.expected|taka0 }}</td><td class="num">{{ r.paid|taka0 }}</td><td class="num">{{ r.due|taka0 }}</td><td>{% if r.overdue %}{% badge "Overdue" "danger" %}{% else %}{% status_badge r.status %}{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-6"><div class="px-5 pt-5"><h2 class="card-title">Payment history</h2></div>
+  <div class="table-wrap mt-3"><table class="tbl"><thead><tr><th>Receipt</th><th>Date</th><th>Fund</th><th>Method</th><th class="num">Amount</th><th></th></tr></thead>
+    <tbody>{% for d in deposits %}<tr class="{% if d.is_void %}opacity-50 line-through{% endif %}"><td><a class="link" href="{% url 'deposit_detail' d.pk %}">{{ d.receipt_no }}</a></td><td>{{ d.date|date:"d M Y" }}</td><td>{{ d.fund_head.name }}</td><td>{{ d.get_method_display }}</td><td class="num font-semibold">{{ d.amount|taka }}</td><td>{% if d.is_void %}{% badge "Void" "danger" %}{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="6" class="py-8 text-center text-stone-500">No deposits yet.</td></tr>{% endfor %}</tbody></table></div></div>
+
+{% if is_office %}
+<div class="mt-6 grid gap-6 lg:grid-cols-2 no-print">
+  <div class="card"><div class="px-5 pt-5"><h2 class="card-title">Online payments</h2></div>
+    <div class="table-wrap mt-3"><table class="tbl"><tbody>{% for p in payments %}<tr><td><a class="link" href="{% url 'payment_detail' p.pk %}">{{ p.reference }}</a><div class="text-xs text-stone-500">{{ p.created_at|date:"d M Y" }}</div></td><td>{{ p.get_method_display }}</td><td class="num">{{ p.amount|taka0 }}</td><td>{% status_badge p.status p.get_status_display %}</td></tr>{% empty %}<tr><td class="py-6 text-center text-stone-500">None.</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card"><div class="flex items-center justify-between px-5 pt-5"><h2 class="card-title">SMS sent</h2>{% if can_finance %}<a class="link text-xs" href="{% url 'compose' %}?member={{ member.pk }}">Send a message</a>{% endif %}</div>
+    <div class="table-wrap mt-3"><table class="tbl"><tbody>{% for s in sms %}<tr><td><a class="link" href="{% url 'sms_detail' s.pk %}">{{ s.trigger }}</a><div class="text-xs text-stone-500">{{ s.created_at|date:"d M Y h:i A" }}</div></td><td>{% status_badge s.status %}</td></tr>{% empty %}<tr><td class="py-6 text-center text-stone-500">None.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endif %}
+{% endblock %}

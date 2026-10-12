@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}{% if is_office %}<a href="?format=csv" class="btn-secondary btn-sm">{% icon 'download' 'h-4 w-4' %} CSV</a>{% endif %}<button onclick="window.print()" class="btn-secondary btn-sm">{% icon 'print' 'h-4 w-4' %} Print</button>{% endblock %}
+{% block content %}
+<div class="mb-5 grid gap-4 sm:grid-cols-3">
+  {% include "components/stat.html" with label="Total deposits" value=totals.deposits|taka0 tone="text-emerald-700" %}
+  {% include "components/stat.html" with label="Total expenses" value=totals.expenses|taka0 tone="text-rose-700" %}
+  {% include "components/stat.html" with label="Closing balance" value=totals.balance|taka0 %}
+</div>
+<div class="card"><div class="table-wrap"><table class="tbl">
+  <thead><tr><th>Month</th><th class="num">Opening</th><th class="num">Deposits</th><th class="num">Expenses</th><th class="num">Closing</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td class="font-medium">{{ r.month|date:"F Y" }}</td><td class="num">{{ r.opening|taka }}</td><td class="num text-emerald-700">{{ r.deposits|taka }}</td><td class="num text-rose-700">{{ r.expenses|taka }}</td><td class="num font-semibold">{{ r.closing|taka }}</td></tr>
+  {% empty %}<tr><td colspan="5" class="py-10 text-center text-stone-500">No entries yet.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td>Total</td><td></td><td class="num">{{ totals.deposits|taka }}</td><td class="num">{{ totals.expenses|taka }}</td><td class="num">{{ totals.balance|taka }}</td></tr></tfoot>
+</table></div></div>
+{% endblock %}

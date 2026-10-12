@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+  <a href="{% url 'monthly_summary' %}" class="card card-body hover:shadow-md">{% icon 'chart' 'h-6 w-6' 'text-brand-600' %}<h2 class="card-title mt-3">Monthly ledger</h2><p class="mt-1 text-sm text-stone-500">Opening balance, deposits, expenses and closing balance for every month.</p></a>
+  <a href="{% url 'fund_report' %}" class="card card-body hover:shadow-md">{% icon 'wallet' 'h-6 w-6' 'text-brand-600' %}<h2 class="card-title mt-3">Fund-wise summary</h2><p class="mt-1 text-sm text-stone-500">Deposits, expenses and balance for each fund / expense head.</p></a>
+  <a href="{% url 'collection_report' %}" class="card card-body hover:shadow-md">{% icon 'clipboard' 'h-6 w-6' 'text-brand-600' %}<h2 class="card-title mt-3">Collection by plan</h2><p class="mt-1 text-sm text-stone-500">Who has paid how much towards each contribution plan.</p></a>
+  <a href="{% url 'members_with_dues' %}" class="card card-body hover:shadow-md">{% icon 'warn' 'h-6 w-6' 'text-brand-600' %}<h2 class="card-title mt-3">Members with dues</h2><p class="mt-1 text-sm text-stone-500">Outstanding amounts, with one-click reminders by SMS.</p></a>
+  <a href="{% url 'deposit_list' %}" class="card card-body hover:shadow-md">{% icon 'arrow-down' 'h-6 w-6' 'text-brand-600' %}<h2 class="card-title mt-3">Date-wise deposits</h2><p class="mt-1 text-sm text-stone-500">Filter by date, member, fund or method; export to CSV or print.</p></a>
+  <a href="{% url 'expense_list' %}" class="card card-body hover:shadow-md">{% icon 'arrow-up' 'h-6 w-6' 'text-brand-600' %}<h2 class="card-title mt-3">Date-wise expenses</h2><p class="mt-1 text-sm text-stone-500">Filter by date, head or approval status; export to CSV or print.</p></a>
+</div>
+{% endblock %}

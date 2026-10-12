@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sign in{% endblock %}
+{% block public %}
+<div class="grid min-h-screen lg:grid-cols-2">
+  <div class="relative hidden bg-taupe-950 lg:flex lg:flex-col lg:justify-between lg:p-12">
+    <div class="flex items-center gap-3"><span class="flex h-12 w-14 items-center justify-center rounded-md bg-white p-1.5"><img src="{% static 'image/bondhonlogo.png' %}" class="h-full object-contain" alt=""></span>
+      <span class="text-lg font-semibold text-white">{{ site.society_name }}</span></div>
+    <div>
+      <h2 class="text-3xl font-bold leading-tight text-white">Bondhon Management<br>&amp; Auditing System</h2>
+      <p class="mt-4 max-w-md text-taupe-300">Contributions, expenses, member payments and SMS receipts - recorded once, audited always.</p>
+      <ul class="mt-8 space-y-3 text-sm text-taupe-200">
+        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-brand-500"></span>Every entry has a numbered receipt and a tamper-evident audit trail</li>
+        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-brand-500"></span>Members can deposit money and see their own statement</li>
+        <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-brand-500"></span>Automatic SMS the moment a payment is recorded</li>
+      </ul>
+    </div>
+    <div class="text-xs text-taupe-500">Access is restricted to society members and office-bearers.</div>
+  </div>
+  <div class="flex items-center justify-center bg-taupe-50 px-6 py-12">
+    <div class="w-full max-w-sm">
+      <div class="mb-8 flex items-center gap-3 lg:hidden"><img src="{% static 'image/bondhonlogo.png' %}" class="h-10" alt=""><span class="font-semibold">{{ site.society_name }}</span></div>
+      <h2 class="text-2xl font-bold text-stone-900">Sign in</h2>
+      <p class="mt-1 text-sm text-stone-500">Use the username given to you by the society office.</p>
+      {% include "components/messages.html" %}
+      <form method="post" class="mt-6 space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% if form.non_field_errors %}<div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">Incorrect username or password.</div>{% endif %}
+        <div><label class="ui-label" for="{{ form.username.id_for_label }}">Username</label>{{ form.username }}</div>
+        <div><label class="ui-label" for="{{ form.password.id_for_label }}">Password</label>{{ form.password }}</div>
+        <button class="btn-primary w-full py-2.5">Sign in</button>
+      </form>
+      <p class="mt-6 text-center text-xs text-stone-400">Forgot your password? Ask the administrator to reset it.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

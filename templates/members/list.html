@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}
+  <a href="?{% url_replace format='csv' %}" class="btn-secondary btn-sm">{% icon 'download' 'h-4 w-4' %} CSV</a>
+  {% if can_finance %}<a href="{% url 'member_import' %}" class="btn-secondary btn-sm">Import / update</a><a href="{% url 'member_add' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} Add member</a>{% endif %}
+{% endblock %}
+{% block content %}
+<form method="get" class="card card-body mb-5 flex flex-wrap items-end gap-3">
+  <div class="min-w-[14rem] flex-1"><label class="ui-label">Search</label><input name="q" value="{{ q }}" class="ui-input" placeholder="Name or phone"></div>
+  <div><label class="ui-label">Status</label><select name="status" class="ui-select"><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option><option value="all" {% if status == 'all' %}selected{% endif %}>All</option></select></div>
+  <label class="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" name="due" value="1" class="ui-check" {% if request.GET.due %}checked{% endif %}> With dues</label>
+  <label class="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" name="phone" value="invalid" class="ui-check" {% if request.GET.phone %}checked{% endif %}> Bad phone</label>
+  <button class="btn-primary">Filter</button>
+</form>
+<div class="card">
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>#</th><th>Member</th><th>Designation</th><th>Mobile</th><th class="num">Shares</th><th class="num">Paid</th><th class="num">Due</th><th>Portal</th></tr></thead>
+    <tbody>{% for r in page %}{% with m=r.member %}
+      <tr><td class="text-stone-400">{{ m.code }}</td>
+        <td><a href="{% url 'member_detail' m.pk %}" class="font-medium text-stone-900 hover:text-brand-700">{{ m.name }}</a>{% if not m.is_active %} {% badge "Inactive" "neutral" %}{% endif %}</td>
+        <td>{{ m.society_designation }}</td>
+        <td>{% if m.has_valid_phone %}{{ m.phone_number }}{% else %}<span class="text-rose-600" title="Invalid number">{{ m.phone_number }} ⚠</span>{% endif %}</td>
+        <td class="num">{{ m.shares }}</td><td class="num">{{ r.paid|taka0 }}</td>
+        <td class="num font-semibold {% if r.due %}text-rose-700{% else %}text-emerald-700{% endif %}">{{ r.due|taka0 }}</td>
+        <td>{% if m.user_id %}{% badge "Has login" "success" %}{% else %}<span class="text-xs text-stone-400">-</span>{% endif %}</td></tr>
+    {% endwith %}{% empty %}<tr><td colspan="8" class="py-10 text-center text-stone-500">No members match.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

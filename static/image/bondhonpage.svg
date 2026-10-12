@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 22.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 960 560" style="enable-background:new 0 0 960 560;" xml:space="preserve">
+<style type="text/css">
+	.st0{opacity:0.16;clip-path:url(#SVGID_2_);fill:url(#SVGID_3_);}
+	.st1{clip-path:url(#SVGID_2_);fill:#CC6666;stroke:#000000;stroke-miterlimit:10;}
+	.st2{clip-path:url(#SVGID_2_);fill:#333333;}
+	.st3{clip-path:url(#SVGID_2_);}
+	.st4{fill:#C1272D;}
+	.st5{font-family:'MyriadPro-Bold';}
+	.st6{font-size:51.0751px;}
+	.st7{opacity:0.33;clip-path:url(#SVGID_2_);fill:#9E005D;}
+	.st8{opacity:0.33;clip-path:url(#SVGID_2_);fill:#0071BC;}
+	.st9{opacity:0.33;clip-path:url(#SVGID_2_);fill:#D9E021;}
+	.st10{opacity:0.33;clip-path:url(#SVGID_2_);fill:#ED1C24;}
+	.st11{opacity:0.26;clip-path:url(#SVGID_2_);fill:#C7B299;}
+</style>
+<image style="overflow:visible;" width="5316" height="4139" xlink:href="C:\Users\Momin\Desktop\New folder\31213.jpg"  transform="matrix(6.790821e-02 0 0 5.147966e-02 1 280)">
+</image>
+<g>
+	<defs>
+		<rect id="SVGID_1_" x="2" width="957" height="562"/>
+	</defs>
+	<clipPath id="SVGID_2_">
+		<use xlink:href="#SVGID_1_"  style="overflow:visible;"/>
+	</clipPath>
+	<linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="1" y1="281.5" x2="633" y2="281.5">
+		<stop  offset="0" style="stop-color:#C7B299"/>
+		<stop  offset="0.5866" style="stop-color:#C7B299"/>
+		<stop  offset="1" style="stop-color:#999999"/>
+	</linearGradient>
+	<polygon class="st0" points="2,1 633,2 295.7,561 1,562 	"/>
+	<path class="st1" d="M1065.5,257.5"/>
+	<path class="st2" d="M1156,202"/>
+	<g class="st3">
+		<text transform="matrix(1.2464 0 0 1 54.9976 87.6509)"><tspan x="0" y="0" class="st4 st5 st6">WELCOME TO</tspan><tspan x="0" y="61.3" class="st4 st5 st6">BONDHON</tspan><tspan x="0" y="122.6" class="st4 st5 st6">SOCIETY</tspan></text>
+	</g>
+	<rect x="733.5" y="450" class="st7" width="342.5" height="213.7"/>
+	<rect x="766.5" y="479" class="st8" width="266.5" height="210"/>
+	<rect x="800.5" y="505.5" class="st9" width="269" height="209.5"/>
+	<rect x="829.5" y="533.6" class="st10" width="304.5" height="246.3"/>
+	<circle class="st11" cx="847.5" cy="554.5" r="154.5"/>
+</g>
+</svg>

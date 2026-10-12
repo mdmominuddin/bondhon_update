@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<a href="?format=csv" class="btn-secondary btn-sm">{% icon 'download' 'h-4 w-4' %} CSV</a><button onclick="window.print()" class="btn-secondary btn-sm">{% icon 'print' 'h-4 w-4' %} Print</button>
+  {% if can_finance and rows %}<a href="{% url 'compose' %}?audience=dues" class="btn-primary btn-sm">{% icon 'chat' 'h-4 w-4' %} SMS reminder to all</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="mb-5">{% include "components/stat.html" with label="Total outstanding" value=total_due|taka0 tone="text-rose-700" %}</div>
+<div class="card"><div class="table-wrap"><table class="tbl">
+  <thead><tr><th>#</th><th>Member</th><th>Mobile</th><th class="num">Shares</th><th class="num">Expected</th><th class="num">Paid</th><th class="num">Due</th><th class="no-print"></th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td class="text-stone-400">{{ forloop.counter }}</td><td><a class="link" href="{% url 'member_detail' r.member.pk %}">{{ r.member.name }}</a></td><td>{{ r.member.phone_number }}</td><td class="num">{{ r.member.shares }}</td><td class="num">{{ r.expected|taka0 }}</td><td class="num">{{ r.paid|taka0 }}</td><td class="num font-semibold text-rose-700">{{ r.due|taka0 }}</td>
+    <td class="no-print text-right">{% if can_finance %}<a class="link text-xs" href="{% url 'compose' %}?member={{ r.member.pk }}&template=">SMS</a>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="8" class="py-10 text-center text-stone-500">No outstanding dues.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td colspan="6">Total</td><td class="num">{{ total_due|taka0 }}</td><td></td></tr></tfoot>
+</table></div></div>
+{% endblock %}

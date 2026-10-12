@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="grid gap-6 lg:grid-cols-3"><form method="post" class="card card-body lg:col-span-2">{% csrf_token %}{% include "components/form.html" with form=form %}
+  <div class="mt-6 flex gap-3"><button class="btn-primary">Save template</button><a href="{% url 'template_list' %}" class="btn-secondary">Cancel</a></div></form>
+  <div class="card card-body"><h2 class="card-title">Placeholders</h2><dl class="mt-3 space-y-2 text-xs">{% for k, d in placeholders.items %}<div><dt class="font-mono text-taupe-800">{ {{ k }} }</dt><dd class="text-stone-500">{{ d }}</dd></div>{% endfor %}</dl></div></div>
+{% endblock %}

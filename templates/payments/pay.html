@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="mx-auto grid max-w-5xl gap-6 lg:grid-cols-5">
+  <form method="post" class="card card-body lg:col-span-3">{% csrf_token %}
+    <h2 class="card-title">Deposit money</h2>
+    <p class="mb-4 mt-1 text-sm text-stone-500">{% if form.manual %}Send the money from your bKash / Nagad / Rocket account or bank, then enter the details below. The treasurer verifies it and you receive an SMS receipt.{% else %}You will be taken to a secure payment page. Your receipt SMS arrives automatically after payment.{% endif %}</p>
+    {% if position.due %}<div class="mb-4 rounded-lg bg-brand-50 p-3 text-sm text-brand-800">Your outstanding due is <b>{{ position.due|taka0 }}</b>. <button type="button" class="link" onclick="document.getElementById('id_amount').value='{{ position.due|floatformat:0 }}'">Pay full due</button></div>{% endif %}
+    {% include "components/form.html" with form=form cols=1 %}
+    <button class="btn-primary mt-6 w-full py-2.5">{% if form.manual %}Submit for verification{% else %}Continue to payment{% endif %}</button>
+  </form>
+  <div class="space-y-5 lg:col-span-2">
+    {% if form.manual %}
+    <div class="card card-body text-sm"><h3 class="card-title">Where to send</h3><dl class="mt-3 space-y-3">
+      {% if site.bkash_number %}<div class="flex items-center justify-between"><dt class="font-medium">bKash <span class="text-xs font-normal text-stone-400">(Send Money)</span></dt><dd class="font-mono">{{ site.bkash_number }}</dd></div>{% endif %}
+      {% if site.nagad_number %}<div class="flex items-center justify-between"><dt class="font-medium">Nagad</dt><dd class="font-mono">{{ site.nagad_number }}</dd></div>{% endif %}
+      {% if site.rocket_number %}<div class="flex items-center justify-between"><dt class="font-medium">Rocket</dt><dd class="font-mono">{{ site.rocket_number }}</dd></div>{% endif %}
+      {% if site.bank_details %}<div><dt class="font-medium">Bank</dt><dd class="mt-1 whitespace-pre-line text-stone-600">{{ site.bank_details }}</dd></div>{% endif %}</dl>
+      {% if not site.bkash_number and not site.nagad_number and not site.rocket_number and not site.bank_details %}<p class="mt-3 text-stone-500">The office has not published payment accounts yet. Please contact the treasurer.</p>{% endif %}
+      {% if site.payment_instructions %}<p class="mt-3 whitespace-pre-line border-t border-taupe-100 pt-3 text-stone-600">{{ site.payment_instructions }}</p>{% endif %}</div>
+    {% endif %}
+    {% if open_payments %}<div class="card card-body text-sm"><h3 class="card-title">Waiting for confirmation</h3><ul class="mt-2 space-y-1.5">{% for p in open_payments %}<li><a class="link" href="{% url 'payment_detail' p.pk %}">{{ p.reference }}</a> · {{ p.amount|taka0 }}</li>{% endfor %}</ul></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

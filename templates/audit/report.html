@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<button onclick="window.print()" class="btn-primary btn-sm">{% icon 'print' 'h-4 w-4' %} Print / save PDF</button>{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <div class="card card-body"><div class="stat-label">{{ site.society_name }} · Audit report</div><h2 class="mt-1 text-2xl font-bold">{{ engagement.title }}</h2>
+    <p class="text-sm text-stone-500">Period {{ engagement.period_start|date:"d F Y" }} to {{ engagement.period_end|date:"d F Y" }} · Lead auditor: {{ engagement.lead_auditor|default:"-" }}</p>
+    {% if engagement.locked %}<div class="mt-4 rounded-lg bg-taupe-50 p-4"><div class="stat-label">Opinion</div><div class="mt-1 text-lg font-semibold">{{ engagement.get_opinion_display }}</div><p class="mt-2 whitespace-pre-line text-sm">{{ engagement.conclusion }}</p></div>
+    {% else %}<p class="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">DRAFT - this audit has not been signed off.</p>{% endif %}</div>
+  <div class="card card-body"><h3 class="card-title">1. Scope</h3><p class="mt-2 whitespace-pre-line text-sm">{{ engagement.scope|default:"Not specified." }}</p></div>
+  <div class="card"><div class="px-5 pt-5"><h3 class="card-title">2. Financial summary</h3></div><div class="table-wrap mt-3"><table class="tbl"><tbody>
+    <tr><td>Opening balance</td><td class="num">{{ ledger.opening|taka }}</td></tr><tr><td>Deposits ({{ ledger.deposit_count }})</td><td class="num">{{ ledger.deposits|taka }}</td></tr><tr><td>Expenses ({{ ledger.expense_count }})</td><td class="num">{{ ledger.expenses|taka }}</td></tr>
+    <tr class="font-semibold"><td>Closing balance (books)</td><td class="num">{{ ledger.closing|taka }}</td></tr></tbody></table></div></div>
+  <div class="card"><div class="px-5 pt-5"><h3 class="card-title">3. Physical verification</h3></div><div class="table-wrap mt-3"><table class="tbl"><tbody>
+    {% for r in recon %}<tr><td>{{ r.label }} <span class="text-xs text-stone-400">({{ r.counted_on|date:"d M Y" }})</span></td><td class="num">{{ r.amount|taka }}</td></tr>{% empty %}<tr><td class="text-stone-500">No physical counts recorded.</td><td></td></tr>{% endfor %}
+    <tr class="font-semibold"><td>Total counted</td><td class="num">{{ counted|taka }}</td></tr><tr class="font-semibold"><td>Variance against books</td><td class="num {% if variance != 0 %}text-rose-700{% endif %}">{{ variance|taka }}</td></tr></tbody></table></div></div>
+  <div class="card card-body"><h3 class="card-title">4. Automated analytics</h3><p class="mt-1 text-sm text-stone-600">{{ summary.passed }} of {{ summary.total }} tests passed; {{ summary.exceptions }} exception(s). Audit trail integrity: {% if chain.0 %}<b class="text-emerald-700">intact ({{ chain.1 }} entries)</b>{% else %}<b class="text-rose-700">BROKEN</b>{% endif %}.</p>
+    <ul class="mt-3 space-y-1.5 text-sm">{% for r in failed %}<li>{% status_badge r.severity %} <b>{{ r.title }}</b> - {{ r.count }} exception{{ r.count|pluralize }}</li>{% empty %}<li class="text-emerald-700">No exceptions.</li>{% endfor %}</ul></div>
+  <div class="card card-body"><h3 class="card-title">5. Findings</h3>
+    {% for f in findings %}<div class="mt-4 border-t border-taupe-100 pt-4 text-sm"><div class="flex flex-wrap gap-2">{% status_badge f.severity %}{% status_badge f.status f.get_status_display %}<b>{{ f.title }}</b></div><p class="mt-2 whitespace-pre-line text-stone-700">{{ f.description }}</p>
+      {% if f.recommendation %}<p class="mt-1"><b>Recommendation:</b> {{ f.recommendation }}</p>{% endif %}{% if f.management_response %}<p class="mt-1"><b>Management response:</b> {{ f.management_response }}</p>{% endif %}</div>
+    {% empty %}<p class="mt-2 text-sm text-stone-500">No findings.</p>{% endfor %}</div>
+  <div class="grid grid-cols-2 gap-10 pt-10 text-center text-xs text-stone-500"><div class="border-t border-stone-400 pt-1">Auditor</div><div class="border-t border-stone-400 pt-1">President / Secretary</div></div>
+</div>
+{% endblock %}

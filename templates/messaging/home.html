@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}{% if can_finance %}<a href="{% url 'compose' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} Compose</a>{% endif %}{% endblock %}
+{% block content %}
+{% if site.sms_backend == 'console' %}<div class="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><b>Test mode.</b> Messages are logged only - nothing is sent to phones. Configure your SMS provider in the server environment, then switch the SMS backend to “HTTP provider” in <a class="link" href="{% url 'site_settings' %}">Settings</a>.</div>
+{% elif not http_ready %}<div class="mb-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">SMS backend is set to HTTP but the provider is not configured on the server (SMS_HTTP_URL / SMS_HTTP_PARAMS). Messages will fail.</div>{% endif %}
+{% if not site.sms_enabled %}<div class="mb-5 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">SMS is switched <b>off</b> in Settings - nothing will be delivered.</div>{% endif %}
+{% if no_phone %}<div class="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{{ no_phone }} active member(s) have no valid mobile number. <a class="link" href="{% url 'member_list' %}?phone=invalid">Fix numbers</a> · <a class="link" href="{% url 'member_import' %}">bulk update</a></div>{% endif %}
+<div class="grid gap-4 sm:grid-cols-4">
+  {% include "components/stat.html" with label="Sent (7 days)" value=stats.sent tone="text-emerald-700" %}{% include "components/stat.html" with label="Queued" value=stats.queued tone="text-amber-700" %}
+  {% include "components/stat.html" with label="Failed" value=stats.failed tone="text-rose-700" %}{% include "components/stat.html" with label="Skipped" value=stats.skipped %}
+</div>
+<div class="mt-6 grid gap-6 lg:grid-cols-2">
+  <div class="card"><div class="flex items-center justify-between px-5 pt-5"><h2 class="card-title">Automatic messages</h2><a href="{% url 'template_list' %}" class="link text-xs">Edit templates</a></div>
+    <ul class="mt-3 divide-y divide-taupe-100 px-5 pb-3 text-sm">{% for t in templates %}<li class="py-3"><div class="flex items-center justify-between"><span class="font-medium">{{ t.get_event_display }}</span>{% if t.is_active %}{% badge "On" "success" %}{% else %}{% badge "Off" "neutral" %}{% endif %}</div><p class="mt-1 text-xs text-stone-500">{{ t.body|truncatechars:130 }}</p></li>{% endfor %}</ul>
+    <p class="border-t border-taupe-100 px-5 py-3 text-xs text-stone-500">A receipt SMS is sent automatically whenever a deposit is recorded - whether entered by the office or paid by the member.</p></div>
+  <div class="card"><div class="flex items-center justify-between px-5 pt-5"><h2 class="card-title">Latest messages</h2><a href="{% url 'sms_outbox' %}" class="link text-xs">Outbox</a></div>
+    <div class="table-wrap mt-3"><table class="tbl"><tbody>{% for s in recent %}<tr><td><a class="link" href="{% url 'sms_detail' s.pk %}">{{ s.member.name|default:s.phone }}</a><div class="text-xs text-stone-500">{{ s.trigger }} · {{ s.created_at|date:"d M h:i A" }}</div></td><td>{% status_badge s.status %}</td></tr>{% empty %}<tr><td class="py-8 text-center text-stone-500">No messages yet.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endblock %}

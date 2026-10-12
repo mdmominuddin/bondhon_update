@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}{% if can_finance and not expense.is_void %}<a href="{% url 'expense_edit' expense.pk %}" class="btn-secondary btn-sm">Edit</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="mx-auto grid max-w-5xl gap-6 lg:grid-cols-3">
+  <div class="card card-body lg:col-span-2">
+    <div class="flex items-start justify-between gap-3"><div><div class="stat-label">{{ expense.expense_head.name }}</div><h2 class="mt-1 text-xl font-semibold text-stone-900">{{ expense.description }}</h2></div>
+      <div>{% if expense.is_void %}{% badge "Void" "danger" %}{% else %}{% status_badge expense.status expense.get_status_display %}{% endif %}</div></div>
+    <div class="mt-4 text-3xl font-bold text-rose-700">{{ expense.amount|taka }}</div>
+    {% if expense.amount >= threshold %}<p class="mt-1 text-xs text-amber-700">Above the large-expense threshold ({{ threshold|taka0 }}).</p>{% endif %}
+    <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-2">
+      <div><dt class="text-stone-500">Date</dt><dd class="font-medium">{{ expense.date|date:"d F Y" }}</dd></div>
+      <div><dt class="text-stone-500">Paid / handled by</dt><dd class="font-medium">{{ expense.created_by.name }}</dd></div>
+      <div><dt class="text-stone-500">Voucher no.</dt><dd class="font-medium">{{ expense.voucher_no|default:"-" }}</dd></div>
+      <div><dt class="text-stone-500">Project</dt><dd class="font-medium">{{ expense.project.name|default:"-" }}</dd></div>
+      <div class="sm:col-span-2"><dt class="text-stone-500">Remark</dt><dd class="font-medium">{{ expense.remark }}</dd></div>
+    </dl>
+    {% if expense.attachment %}
+    <div class="mt-5"><div class="stat-label">Bill / voucher</div>
+      {% if expense.attachment.name|lower|slice:"-4:" == ".pdf" %}<a class="link mt-1 inline-block" href="{{ expense.attachment.url }}" target="_blank">Open attached PDF</a>
+      {% else %}<a href="{{ expense.attachment.url }}" target="_blank"><img src="{{ expense.attachment.url }}" alt="Voucher" class="mt-2 max-h-96 rounded-lg border border-taupe-200"></a>{% endif %}</div>
+    {% endif %}
+  </div>
+  <div class="space-y-4">
+    {% if is_office %}
+    <div class="card card-body text-sm"><h3 class="card-title">Control trail</h3>
+      <ol class="mt-3 space-y-3">
+        <li><div class="font-medium">Recorded</div><div class="text-xs text-stone-500">{{ expense.recorded_by|default:"unknown (legacy entry)" }} · {{ expense.created_at|date:"d M Y h:i A"|default:"before upgrade" }}</div></li>
+        {% if expense.approved_at %}<li><div class="font-medium">{{ expense.get_status_display }}</div><div class="text-xs text-stone-500">{{ expense.approved_by|default:"-" }} · {{ expense.approved_at|date:"d M Y h:i A" }}</div>{% if expense.reject_reason %}<div class="text-xs text-rose-700">{{ expense.reject_reason }}</div>{% endif %}</li>
+        {% elif expense.status == 'approved' %}<li><div class="font-medium">Approved</div><div class="text-xs text-stone-500">Already in the books before the upgrade</div></li>{% endif %}
+        {% if expense.is_void %}<li><div class="font-medium text-rose-700">Voided</div><div class="text-xs text-stone-500">{{ expense.voided_by }} · {{ expense.voided_at|date:"d M Y" }}: {{ expense.void_reason }}</div></li>{% endif %}
+      </ol></div>
+    {% if is_admin and expense.status == 'pending' and not expense.is_void %}
+    <div class="card card-body space-y-3">
+      <form method="post" action="{% url 'expense_approve' expense.pk %}">{% csrf_token %}<button class="btn-success w-full">{% icon 'check' 'h-4 w-4' %} Approve</button></form>
+      <form method="post" action="{% url 'expense_reject' expense.pk %}" class="space-y-2">{% csrf_token %}{{ reason_form.reason }}<button class="btn-secondary w-full">Reject</button></form>
+    </div>
+    {% endif %}
+    {% if is_admin and not expense.is_void %}
+    <div class="card card-body" x-data="{ open: false }"><button @click="open = !open" class="text-left text-sm font-semibold text-rose-700">Void this expense</button>
+      <form x-show="open" x-cloak method="post" action="{% url 'expense_void' expense.pk %}" class="mt-3 space-y-3">{% csrf_token %}{{ reason_form.reason }}<button class="btn-danger btn-sm">Confirm void</button></form></div>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

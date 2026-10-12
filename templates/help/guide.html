@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% comment %}
+  Help & guide page. Role-aware: each person sees the sections for their own role.
+  Place this file at:  templates/help/guide.html
+{% endcomment %}
+{% block header_actions %}<button onclick="window.print()" class="btn-secondary btn-sm no-print">{% icon 'print' 'h-4 w-4' %} Print guide</button>{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl space-y-4" x-data="{ open: '{% if is_member and not is_office %}member{% elif is_admin %}setup{% else %}daily{% endif %}' }">
+
+  <div class="card card-body">
+    <h2 class="text-xl font-bold text-stone-900">How to use the Bondhon Management &amp; Auditing System</h2>
+    <p class="mt-2 text-sm text-stone-600">This guide shows the steps for <b>your role{% if roles %} ({{ roles|join:", " }}){% endif %}</b>. Click a heading to open or close a section.
+      Everything you do is recorded in an audit trail, so enter information carefully and give a reason whenever the system asks for one.</p>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <div class="card card-body text-sm"><div class="font-semibold text-brand-700">Admin</div><p class="mt-1 text-stone-600">Controls users, settings and approvals. Can void entries and re-open a closed audit.</p></div>
+    <div class="card card-body text-sm"><div class="font-semibold text-brand-700">Treasurer</div><p class="mt-1 text-stone-600">Records deposits and expenses, verifies member payments, sends SMS. Expenses need admin approval.</p></div>
+    <div class="card card-body text-sm"><div class="font-semibold text-brand-700">Auditor</div><p class="mt-1 text-stone-600">Reads everything, runs audit checks, records findings and signs off an audit. Cannot change the books.</p></div>
+    <div class="card card-body text-sm"><div class="font-semibold text-brand-700">Member</div><p class="mt-1 text-stone-600">Sees own statement and receipts, deposits money and receives notifications.</p></div>
+  </div>
+
+  {# ------------------------------------------------------------------ #}
+  {% if is_admin %}
+  <section class="card">
+    <button class="flex w-full items-center justify-between p-5 text-left" @click="open = open === 'setup' ? '' : 'setup'">
+      <span class="card-title">First-time setup (Admin) - do this once</span><span class="text-stone-400" x-text="open === 'setup' ? '−' : '+'"></span></button>
+    <div x-show="open === 'setup'" x-cloak class="space-y-3 border-t border-taupe-100 p-5 text-sm text-stone-700">
+      <ol class="list-decimal space-y-3 pl-5">
+        <li><b>Fix the members' mobile numbers.</b> Go to <a class="link" href="{% url 'member_list' %}">Members</a> → <i>CSV</i> to download the list, correct the <code>phone_number</code> column in Excel (keep the <code>id</code> column), then use <a class="link" href="{% url 'member_import' %}">Import / update</a>. Numbers like <code>01712345678</code> are valid. Without valid numbers no SMS can be sent.</li>
+        <li><b>Fill in Settings.</b> Open <a class="link" href="{% url 'site_settings' %}">Settings</a>: society name and address, the receipt prefix, the default fund head, and the bKash / Nagad / Rocket numbers and bank details that members will see when they deposit money.</li>
+        <li><b>Check the fund heads.</b> The same page lists the fund / expense heads. Add any missing ones.</li>
+        <li><b>Create the people who will work in the system.</b> Open <a class="link" href="{% url 'user_list' %}">Users &amp; roles</a> → <i>New user</i>. Choose the roles (Treasurer, Auditor...). A temporary password is shown <b>once</b> - copy it and give it to the person.</li>
+        <li><b>Give members their portal login.</b> Open a member's page and press <i>Create login</i>. Tick “Send login details by SMS” if SMS is already live. The member must change the password on first sign-in.</li>
+        <li><b>Set up SMS.</b> The system starts in <i>test mode</i>: messages are recorded but not sent. When your SMS provider details are in the server's <code>.env</code> file, change <i>SMS backend</i> in Settings to “HTTP provider”. Then send a message to yourself from <a class="link" href="{% url 'compose' %}">Compose</a> to test.</li>
+        <li><b>Contribution plans.</b> Under <a class="link" href="{% url 'contribution_plan_list' %}">Contribution plans</a> each plan has an amount <i>per share</i>. Adding a plan raises every member's expected amount.</li>
+      </ol>
+    </div>
+  </section>
+  {% endif %}
+
+  {# ------------------------------------------------------------------ #}
+  {% if can_finance %}
+  <section class="card">
+    <button class="flex w-full items-center justify-between p-5 text-left" @click="open = open === 'daily' ? '' : 'daily'">
+      <span class="card-title">Daily work (Treasurer / Admin)</span><span class="text-stone-400" x-text="open === 'daily' ? '−' : '+'"></span></button>
+    <div x-show="open === 'daily'" x-cloak class="space-y-5 border-t border-taupe-100 p-5 text-sm text-stone-700">
+      <div><h3 class="font-semibold text-stone-900">Record a deposit</h3>
+        <ol class="mt-1 list-decimal space-y-1 pl-5"><li>Press <a class="link" href="{% url 'create_deposit' %}">Deposit</a> (top of the Dashboard or the Deposits page).</li>
+          <li>Choose the date, member, amount, fund head and how it was paid. For bKash/Nagad/bank, write the transaction ID in <i>reference</i>.</li>
+          <li>Press <i>Record deposit</i>. A numbered receipt is created and the member receives an <b>SMS automatically</b>. Use <i>Print receipt</i> to give a paper copy.</li></ol></div>
+      <div><h3 class="font-semibold text-stone-900">Entered something wrong?</h3>
+        <p class="mt-1">Open the deposit and press <i>Edit</i> for a small correction (changes are logged and visible to auditors). To cancel a deposit completely, ask an Admin to <b>void</b> it with a reason - deposits are never deleted, and a voided deposit is removed from all totals.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Record an expense</h3>
+        <ol class="mt-1 list-decimal space-y-1 pl-5"><li>Press <a class="link" href="{% url 'create_expense' %}">New expense</a>.</li>
+          <li>Fill in the description, head, amount and who paid. Add the <b>voucher number</b> and attach a <b>photo or PDF of the bill</b> - auditors check for this.</li>
+          <li>{% if is_admin %}As Admin your expense is approved immediately.{% else %}Your expense goes to the Admin for approval and counts in the books only after it is approved.{% endif %}</li></ol></div>
+      <div><h3 class="font-semibold text-stone-900">Verify a member's online payment</h3>
+        <ol class="mt-1 list-decimal space-y-1 pl-5"><li>Open <a class="link" href="{% url 'payment_list' %}">Member payments</a> and choose a <i>Pending</i> one.</li>
+          <li>Check the <b>transaction ID and amount</b> in your own bKash / Nagad / Rocket / bank statement.</li>
+          <li>If it matches press <i>Confirm payment</i> (this creates the deposit and sends the receipt SMS). If not, write a reason and press <i>Reject</i> - the member is told why.</li></ol></div>
+      <div><h3 class="font-semibold text-stone-900">Send messages</h3>
+        <p class="mt-1">Open <a class="link" href="{% url 'compose' %}">Compose</a>. Choose who gets it (selected members, everyone, or only members with dues), pick a template or write your own, and press <i>Send</i>. Placeholders such as <code>{member_name}</code> and <code>{due}</code> are filled in for each person; the preview shows the result and the number of SMS parts. The <a class="link" href="{% url 'sms_outbox' %}">Outbox</a> shows what was sent, failed or skipped.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Chase dues</h3>
+        <p class="mt-1">Open <a class="link" href="{% url 'members_with_dues' %}">Dues</a> to see who owes what. Press <i>SMS reminder to all</i> to send the reminder template to every member with a due.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Reports</h3>
+        <p class="mt-1"><a class="link" href="{% url 'reports' %}">Reports</a> has the monthly ledger, fund-wise summary, collection by plan and dues. Lists can be filtered, exported to CSV or printed.</p></div>
+    </div>
+  </section>
+  {% endif %}
+
+  {# ------------------------------------------------------------------ #}
+  {% if is_admin %}
+  <section class="card">
+    <button class="flex w-full items-center justify-between p-5 text-left" @click="open = open === 'admin' ? '' : 'admin'">
+      <span class="card-title">Admin duties</span><span class="text-stone-400" x-text="open === 'admin' ? '−' : '+'"></span></button>
+    <div x-show="open === 'admin'" x-cloak class="space-y-4 border-t border-taupe-100 p-5 text-sm text-stone-700">
+      <div><h3 class="font-semibold text-stone-900">Approve expenses</h3><p class="mt-1">The Dashboard shows “expenses waiting for approval”. Open each one, compare it with the attached bill, then <i>Approve</i> or <i>Reject</i> (with a reason).</p></div>
+      <div><h3 class="font-semibold text-stone-900">Void a wrong entry</h3><p class="mt-1">Open the deposit or expense, choose <i>Void</i>, write the reason and confirm. The record stays visible for the auditors.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Users &amp; roles</h3><p class="mt-1">Add or disable users, change roles and reset passwords at <a class="link" href="{% url 'user_list' %}">Users &amp; roles</a>. A reset password is shown once - give it to the person. You cannot remove your own Admin role.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Re-open a closed audit</h3><p class="mt-1">After an auditor signs off, records in that period are locked. If a late bill must be added, open the audit → <i>Sign-off</i> → <i>Re-open</i>, with a reason. It is recorded in the audit trail, and the auditor should close it again afterwards.</p></div>
+    </div>
+  </section>
+  {% endif %}
+
+  {# ------------------------------------------------------------------ #}
+  {% if can_audit %}
+  <section class="card">
+    <button class="flex w-full items-center justify-between p-5 text-left" @click="open = open === 'audit' ? '' : 'audit'">
+      <span class="card-title">Auditing (Auditor / Admin)</span><span class="text-stone-400" x-text="open === 'audit' ? '−' : '+'"></span></button>
+    <div x-show="open === 'audit'" x-cloak class="space-y-4 border-t border-taupe-100 p-5 text-sm text-stone-700">
+      <p>Start at <a class="link" href="{% url 'audit_overview' %}">Audit overview</a>. It shows whether the audit trail is intact and the most serious exceptions found by the automatic tests.</p>
+      <div><h3 class="font-semibold text-stone-900">Conduct an audit step by step</h3>
+        <ol class="mt-1 list-decimal space-y-2 pl-5">
+          <li><b>Create the engagement.</b> <a class="link" href="{% url 'audit_engagement_add' %}">New audit</a> → give it a title, the period (for example 1 Jan – 31 Dec) and the scope.</li>
+          <li><b>Run the analytics.</b> Open the <i>Analytics</i> tab. Each test shows its exceptions; press <i>Details</i> to see the records.</li>
+          <li><b>Raise findings.</b> Press <i>Raise finding</i> on a test, or add one manually in the <i>Findings</i> tab. Set the severity and write a recommendation.</li>
+          <li><b>Verify physically.</b> In <i>Reconciliation</i> enter the cash in hand, bank and wallet balances you actually counted. The system compares the total with the book balance and shows the variance.</li>
+          <li><b>Management responds.</b> The Treasurer or Admin replies to each finding. You can mark it resolved or accepted.</li>
+          <li><b>Sign off.</b> In <i>Sign-off</i> choose your opinion, write the conclusion and close the audit. The period is <b>locked</b>. Open <i>Report</i> to print or save it as PDF.</li></ol></div>
+      <div><h3 class="font-semibold text-stone-900">Audit trail</h3><p class="mt-1"><a class="link" href="{% url 'audit_log' %}">Audit trail</a> lists every action with who, when and what changed (before and after values). Use the filters, export to CSV, and press <i>Verify integrity</i> to prove that no entry was altered or removed.</p></div>
+      <div><h3 class="font-semibold text-stone-900">What the tests look for</h3>
+        <p class="mt-1">Duplicate deposits, reused transaction IDs, entries made long after their date, amounts changed after posting, gaps in receipt numbers, expenses without bills, unusually large expenses, heads that spent more than collected, items waiting too long for approval, members without a valid phone number, and any tampering with the audit trail itself.</p></div>
+    </div>
+  </section>
+  {% elif is_office %}
+  <section class="card">
+    <button class="flex w-full items-center justify-between p-5 text-left" @click="open = open === 'audit' ? '' : 'audit'">
+      <span class="card-title">Audits and findings</span><span class="text-stone-400" x-text="open === 'audit' ? '−' : '+'"></span></button>
+    <div x-show="open === 'audit'" x-cloak class="border-t border-taupe-100 p-5 text-sm text-stone-700"><p>Open <a class="link" href="{% url 'audit_engagements' %}">Engagements</a> to read an audit and its report. If a finding concerns you, open the <i>Findings</i> tab and press <i>Respond</i> to explain what was done.</p></div>
+  </section>
+  {% endif %}
+
+  {# ------------------------------------------------------------------ #}
+  {% if is_member %}
+  <section class="card">
+    <button class="flex w-full items-center justify-between p-5 text-left" @click="open = open === 'member' ? '' : 'member'">
+      <span class="card-title">Member guide - my account and deposits</span><span class="text-stone-400" x-text="open === 'member' ? '−' : '+'"></span></button>
+    <div x-show="open === 'member'" x-cloak class="space-y-4 border-t border-taupe-100 p-5 text-sm text-stone-700">
+      <div><h3 class="font-semibold text-stone-900">Signing in</h3><p class="mt-1">Use the username and temporary password from the society office. At first sign-in you must choose your own password. Forgot it? Ask the office to reset it.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Deposit money</h3>
+        <ol class="mt-1 list-decimal space-y-1 pl-5"><li>Open <a class="link" href="{% url 'pay' %}">Deposit money</a> and read where to send the money (bKash, Nagad, Rocket or bank).</li>
+          <li>Send the money from your phone or bank.</li>
+          <li>Back on the page, enter the amount, the method, the <b>transaction ID (TrxID)</b> from your confirmation message, and the number you paid from. Press <i>Submit for verification</i>.</li>
+          <li>The treasurer checks it. You get an SMS and a receipt when it is confirmed, or a message with the reason if it cannot be verified.</li></ol>
+        <p class="mt-2">Where the society uses an online payment page instead, you only enter the amount and are taken to a secure page to pay.</p></div>
+      <div><h3 class="font-semibold text-stone-900">See what I owe</h3><p class="mt-1">The first page shows your expected contribution, what you have paid, and what is due for each contribution plan. “Pay full due” on the deposit page fills in the amount for you.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Receipts and notifications</h3><p class="mt-1"><a class="link" href="{% url 'deposit_list' %}">My receipts</a> lists every payment and lets you print a receipt. <a class="link" href="{% url 'notifications' %}">Notifications</a> keeps a copy of every message the society sent you.</p></div>
+    </div>
+  </section>
+  {% endif %}
+
+  {# ------------------------------------------------------------------ #}
+  <section class="card">
+    <button class="flex w-full items-center justify-between p-5 text-left" @click="open = open === 'faq' ? '' : 'faq'">
+      <span class="card-title">Questions and problems</span><span class="text-stone-400" x-text="open === 'faq' ? '−' : '+'"></span></button>
+    <div x-show="open === 'faq'" x-cloak class="space-y-4 border-t border-taupe-100 p-5 text-sm text-stone-700">
+      <div><h3 class="font-semibold text-stone-900">The SMS shows “Skipped”</h3><p class="mt-1">Open the message to see the reason: the member's number is not a valid Bangladesh mobile number, the member turned SMS off, or SMS is switched off in Settings. Fix the cause; the deposit itself is not affected.</p></div>
+      <div><h3 class="font-semibold text-stone-900">The SMS shows “Failed”</h3><p class="mt-1">The SMS provider did not accept it. The Admin should check the provider details; then open the message and press <i>Send / retry now</i>, or use <i>Send queued &amp; retry failed</i> in the Outbox.</p></div>
+      <div><h3 class="font-semibold text-stone-900">Nothing is actually reaching phones</h3><p class="mt-1">The system may still be in <b>test mode</b> (a yellow banner on the Message center says so). The Admin switches it to “HTTP provider” in Settings once the provider is configured.</p></div>
+      <div><h3 class="font-semibold text-stone-900">“This date falls in an audited period which is locked”</h3><p class="mt-1">An audit for that period has been signed off. Ask the Admin to re-open the audit if the change is genuinely needed.</p></div>
+      <div><h3 class="font-semibold text-stone-900">My expense is not in the totals</h3><p class="mt-1">It is probably still <i>Pending</i>. Only approved expenses count. Ask the Admin to approve it.</p></div>
+      <div><h3 class="font-semibold text-stone-900">A member says they paid but nothing shows</h3><p class="mt-1">Check <a class="link" href="{% url 'payment_list' %}">Member payments</a> for a pending request. If there is none, ask the member for the TrxID and record the deposit yourself.</p></div>
+      <div><h3 class="font-semibold text-stone-900">“Transaction ID has already been submitted”</h3><p class="mt-1">Each TrxID can be used once, to stop the same payment being counted twice. If the member entered it wrongly the first time, reject that payment and let them submit again.</p></div>
+    </div>
+  </section>
+
+  <p class="no-print text-center text-xs text-stone-400">Need a change to the system? Tell the person who looks after the software.</p>
+</div>
+{% endblock %}

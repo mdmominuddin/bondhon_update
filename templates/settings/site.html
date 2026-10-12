@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="grid gap-6 xl:grid-cols-3">
+  <form method="post" class="card card-body xl:col-span-2">{% csrf_token %}
+    {% include "components/form.html" with form=form %}
+    <div class="mt-6"><button class="btn-primary">Save settings</button></div>
+  </form>
+  <div class="space-y-6">
+    <div class="card card-body text-sm"><h2 class="card-title">Server configuration</h2>
+      <p class="mt-1 text-xs text-stone-500">Secrets are set as environment variables (.env), never stored in the database.</p>
+      <ul class="mt-3 space-y-2">
+        <li class="flex justify-between"><span>HTTP SMS provider</span>{% if env.sms_http_ready %}{% badge "Configured" "success" %}{% else %}{% badge "Not configured" "warning" %}{% endif %}</li>
+        <li class="flex justify-between"><span>SSLCommerz credentials</span>{% if env.sslcommerz_ready %}{% badge "Configured" "success" %}{% else %}{% badge "Not configured" "neutral" %}{% endif %}</li>
+        <li class="flex justify-between"><span>Sandbox gateway</span>{% if env.sandbox_enabled %}{% badge "Enabled (testing)" "warning" %}{% else %}{% badge "Off" "success" %}{% endif %}</li>
+        <li class="flex justify-between"><span>Public URL</span><span class="text-xs text-stone-500">{{ env.base_url }}</span></li>
+      </ul></div>
+    <div class="card card-body"><h2 class="card-title">Fund / expense heads</h2>
+      <ul class="mt-3 divide-y divide-taupe-100 text-sm">{% for h in heads %}<li class="flex justify-between py-2"><span>{{ h.name }}</span><span class="text-xs text-stone-400">{{ h.n_dep }} dep · {{ h.n_exp }} exp</span></li>{% endfor %}</ul>
+      <form method="post" class="mt-4 flex gap-2">{% csrf_token %}{{ head_form.name }}<button name="add_head" value="1" class="btn-secondary">Add</button></form>
+      {% for e in head_form.name.errors %}<p class="mt-1 text-xs text-rose-600">{{ e }}</p>{% endfor %}</div>
+  </div>
+</div>
+{% endblock %}

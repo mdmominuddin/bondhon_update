@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}{% if can_finance %}<a href="{% url 'project_add' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} New project</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="grid gap-5 md:grid-cols-2">
+  {% for r in rows %}
+  <div class="card card-body"><div class="flex items-start justify-between"><div><h2 class="card-title">{{ r.project.name }}</h2><div class="text-xs text-stone-500">{{ r.project.start_date|date:"d M Y" }}{% if r.project.end_date %} → {{ r.project.end_date|date:"d M Y" }}{% endif %}</div></div>{% if can_finance %}<a href="{% url 'project_edit' r.project.pk %}" class="link text-xs">Edit</a>{% endif %}</div>
+    {% if r.project.description %}<p class="mt-2 text-sm text-stone-600">{{ r.project.description }}</p>{% endif %}
+    <div class="mt-4 flex justify-between text-sm"><span>Spent <b>{{ r.spent|taka0 }}</b></span><span>Budget <b>{{ r.project.budget|taka0 }}</b></span></div>
+    <div class="mt-1.5 h-2 rounded-full bg-taupe-100"><div class="h-2 rounded-full {% if r.remaining < 0 %}bg-rose-600{% else %}bg-brand-500{% endif %}" style="width: {{ r.pct|pct }}%"></div></div>
+    <div class="mt-1 text-xs {% if r.remaining < 0 %}text-rose-700{% else %}text-stone-500{% endif %}">{% if r.remaining < 0 %}Over budget by {{ r.remaining|taka0 }}{% else %}{{ r.remaining|taka0 }} remaining{% endif %}</div></div>
+  {% empty %}<div class="card card-body text-center text-stone-500 md:col-span-2">No projects yet. Create one and tag expenses to it to track budget against spend.</div>{% endfor %}
+</div>
+{% endblock %}

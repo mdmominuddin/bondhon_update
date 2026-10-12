@@ -1,0 +1,19 @@
+{# Renders a Django form with the design system. Usage: {% include "components/form.html" with form=form %} #}
+{% if form.non_field_errors %}<div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{{ form.non_field_errors }}</div>{% endif %}
+<div class="grid gap-4 {% if cols == 1 %}grid-cols-1{% else %}sm:grid-cols-2{% endif %}">
+  {% for field in form.visible_fields %}
+  <div class="{% if field.field.widget.input_type == 'textarea' or field.name in 'description address remark scope body note conclusion roles members recommendation management_response bank_details payment_instructions' %}sm:col-span-2{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' and field.name != 'roles' %}
+      <label class="flex items-center gap-2 text-sm font-medium text-stone-700">{{ field }} {{ field.label }}</label>
+    {% else %}
+      <label for="{{ field.id_for_label }}" class="ui-label">{{ field.label }}{% if field.field.required %}<span class="text-brand-600"> *</span>{% endif %}</label>
+      {% if field.name == 'roles' or field.name == 'audience' %}
+        <div class="space-y-1.5 rounded-lg border border-taupe-200 bg-white p-3 text-sm">{% for opt in field %}<label class="flex items-center gap-2">{{ opt.tag }} {{ opt.choice_label }}</label>{% endfor %}</div>
+      {% else %}{{ field }}{% endif %}
+    {% endif %}
+    {% if field.help_text %}<p class="mt-1 text-xs text-stone-500">{{ field.help_text }}</p>{% endif %}
+    {% for e in field.errors %}<p class="mt-1 text-xs font-medium text-rose-600">{{ e }}</p>{% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}

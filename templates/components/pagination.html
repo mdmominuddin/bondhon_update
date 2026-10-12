@@ -1,0 +1,10 @@
+{% load bondhon_extras %}
+{% if page.paginator.num_pages > 1 %}
+<div class="no-print flex items-center justify-between border-t border-taupe-200 px-4 py-3 text-sm text-stone-600">
+  <div>Page {{ page.number }} of {{ page.paginator.num_pages }} · {{ page.paginator.count }} records</div>
+  <div class="flex gap-2">
+    {% if page.has_previous %}<a class="btn-secondary btn-sm" href="?{% url_replace page=page.previous_page_number %}">Previous</a>{% endif %}
+    {% if page.has_next %}<a class="btn-secondary btn-sm" href="?{% url_replace page=page.next_page_number %}">Next</a>{% endif %}
+  </div>
+</div>
+{% endif %}

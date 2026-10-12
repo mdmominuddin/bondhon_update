@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<a href="?{% url_replace format='csv' %}" class="btn-secondary btn-sm">{% icon 'download' 'h-4 w-4' %} CSV</a>
+  <form method="post" action="{% url 'audit_verify' %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'audit_log' %}"><button class="btn-secondary btn-sm">{% icon 'shield' 'h-4 w-4' %} Verify integrity</button></form>{% endblock %}
+{% block content %}
+<form method="get" class="card card-body mb-5"><div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+  <div class="lg:col-span-2"><label class="ui-label">Search</label>{{ form.q }}</div><div><label class="ui-label">Action</label>{{ form.action }}</div><div><label class="ui-label">Record</label>{{ form.model }}</div>
+  <div><label class="ui-label">From</label>{{ form.start }}</div><div><label class="ui-label">To</label>{{ form.end }}</div><div class="flex items-end"><button class="btn-primary">Filter</button></div></div></form>
+<div class="card"><div class="table-wrap"><table class="tbl">
+  <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Record</th><th>Detail</th></tr></thead>
+  <tbody>{% for l in page %}<tr><td class="whitespace-nowrap text-xs"><a class="link" href="{% url 'audit_log_detail' l.pk %}">{{ l.timestamp|date:"d M Y h:i:s A" }}</a></td>
+    <td>{{ l.username|default:"system" }}<div class="text-xs text-stone-400">{{ l.ip_address|default:"" }}</div></td><td>{% status_badge l.action l.get_action_display %}</td>
+    <td class="text-xs text-stone-500">{{ l.model|default:"-" }}</td><td>{{ l.object_repr|default:l.message|truncatechars:60 }}{% if l.changes %}<div class="text-xs text-stone-400">{{ l.changes|length }} field{{ l.changes|length|pluralize }}</div>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="5" class="py-10 text-center text-stone-500">No entries match.</td></tr>{% endfor %}</tbody></table></div>
+  {% include "components/pagination.html" %}</div>
+{% endblock %}

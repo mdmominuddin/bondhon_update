@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<a href="{% url 'audit_engagement_add' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} New audit</a>{% endblock %}
+{% block content %}
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="card card-body {% if chain_ok %}border-emerald-200{% else %}border-rose-300 bg-rose-50{% endif %}"><div class="stat-label">Audit trail integrity</div>
+    <div class="stat-value {% if chain_ok %}text-emerald-700{% else %}text-rose-700{% endif %}">{% if chain_ok %}Intact{% else %}BROKEN{% endif %}</div>
+    <div class="mt-2 text-xs text-stone-500">{% if chain_ok %}{{ chain_checked }} hash-chained entries verified{% else %}Entry #{{ chain_bad }} fails verification{% endif %}</div>
+    <form method="post" action="{% url 'audit_verify' %}" class="mt-3">{% csrf_token %}<button class="btn-secondary btn-sm">Re-verify now</button></form></div>
+  {% include "components/stat.html" with label="Analytics exceptions (YTD)" value=summary.exceptions tone="text-amber-700" icon_name="warn" icon_bg="bg-amber-50 text-amber-700" %}
+  {% include "components/stat.html" with label="Tests passed" value=summary.passed|stringformat:"s" icon_name="check" icon_bg="bg-emerald-50 text-emerald-700" hint="Out of the automated tests run" %}
+  {% include "components/stat.html" with label="Open findings" value=open_findings icon_name="shield" icon_bg="bg-brand-50 text-brand-700" hint="Awaiting a management response" %}
+</div>
+
+<div class="mt-6 grid gap-6 xl:grid-cols-3">
+  <div class="xl:col-span-2">
+    <div class="mb-3 flex items-center justify-between"><h2 class="card-title">Top exceptions · {{ period.0|date:"d M Y" }} – {{ period.1|date:"d M Y" }}</h2><a href="{% url 'audit_checks' %}" class="link text-xs">All tests &amp; custom range</a></div>
+    {% if results %}{% include "audit/_results.html" %}{% else %}<div class="card card-body text-center text-emerald-700">All automated tests passed for this period.</div>{% endif %}
+  </div>
+  <div class="space-y-6">
+    <div class="card"><div class="flex items-center justify-between px-5 pt-5"><h2 class="card-title">Engagements</h2><a href="{% url 'audit_engagements' %}" class="link text-xs">All</a></div>
+      <ul class="mt-3 divide-y divide-taupe-100 px-5 pb-3 text-sm">{% for e in engagements %}<li class="flex items-center justify-between py-2.5"><a class="link" href="{% url 'audit_engagement' e.pk %}">{{ e.title }}</a>{% status_badge e.status e.get_status_display %}</li>{% empty %}<li class="py-5 text-center text-stone-500">None yet.</li>{% endfor %}</ul></div>
+    <div class="card"><div class="flex items-center justify-between px-5 pt-5"><h2 class="card-title">Latest activity</h2><a href="{% url 'audit_log' %}" class="link text-xs">Full trail</a></div>
+      <ul class="mt-3 divide-y divide-taupe-100 px-5 pb-3 text-sm">{% for l in recent %}<li class="py-2"><a href="{% url 'audit_log_detail' l.pk %}" class="font-medium hover:text-brand-700">{{ l.get_action_display }} · {{ l.object_repr|default:l.message|truncatechars:34 }}</a><div class="text-xs text-stone-500">{{ l.username|default:"system" }} · {{ l.timestamp|date:"d M h:i A" }}</div></li>{% endfor %}</ul></div>
+    {% if is_admin %}<form method="post" action="{% url 'audit_rebuild_summaries' %}" onsubmit="return confirm('Overwrite the stored monthly summary table with figures rebuilt from the ledger?')">{% csrf_token %}<button class="btn-secondary w-full">Rebuild stored monthly summaries from ledger</button></form>{% endif %}
+  </div>
+</div>
+{% endblock %}

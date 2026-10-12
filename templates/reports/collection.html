@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<button onclick="window.print()" class="btn-secondary btn-sm">{% icon 'print' 'h-4 w-4' %} Print</button>{% endblock %}
+{% block content %}
+<div class="card"><div class="table-wrap"><table class="tbl">
+  <thead><tr><th>Member</th><th class="num">Shares</th>{% for p in plans %}<th class="num">{{ p.description|truncatechars:22 }}</th>{% endfor %}<th class="num">Paid</th><th class="num">Due</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td><a class="link" href="{% url 'member_detail' r.member.pk %}">{{ r.member.name }}</a></td><td class="num">{{ r.member.shares }}</td>
+    {% for b in r.breakdown %}<td class="num {% if b.due == 0 %}text-emerald-700{% elif b.overdue %}text-rose-700{% endif %}">{{ b.paid|taka0 }}<div class="text-[10px] text-stone-400">of {{ b.expected|taka0 }}</div></td>{% endfor %}
+    <td class="num font-semibold">{{ r.paid|taka0 }}</td><td class="num font-semibold {% if r.due %}text-rose-700{% endif %}">{{ r.due|taka0 }}</td></tr>{% endfor %}</tbody>
+</table></div></div>
+<p class="mt-3 text-xs text-stone-500">Payments are applied to the oldest contribution first.</p>
+{% endblock %}

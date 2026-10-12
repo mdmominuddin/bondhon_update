@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="mx-auto grid max-w-5xl gap-6 lg:grid-cols-3">
+  <div class="card card-body lg:col-span-2">
+    <div class="flex items-center justify-between"><div><div class="stat-label">Payment reference</div><div class="font-mono text-lg font-semibold">{{ payment.reference }}</div></div>{% status_badge payment.status payment.get_status_display %}</div>
+    <div class="mt-4 text-3xl font-bold">{{ payment.amount|taka }}</div><div class="text-sm text-stone-500">{{ words }}</div>
+    <dl class="mt-5 grid gap-4 text-sm sm:grid-cols-2"><div><dt class="text-stone-500">Member</dt><dd class="font-medium">{{ payment.member.name }}</dd></div><div><dt class="text-stone-500">Method</dt><dd class="font-medium">{{ payment.get_method_display }} ({{ payment.gateway }})</dd></div>
+      <div><dt class="text-stone-500">Transaction ID</dt><dd class="font-mono">{{ payment.trx_id|default:"-" }}</dd></div><div><dt class="text-stone-500">Paid from</dt><dd>{{ payment.sender_number|default:"-" }}</dd></div>
+      <div><dt class="text-stone-500">Submitted</dt><dd>{{ payment.created_at|date:"d M Y h:i A" }}</dd></div><div><dt class="text-stone-500">Decided</dt><dd>{% if payment.decided_at %}{{ payment.decided_at|date:"d M Y h:i A" }}{% if payment.decided_by %} by {{ payment.decided_by }}{% endif %}{% else %}-{% endif %}</dd></div>
+      {% if payment.note %}<div class="sm:col-span-2"><dt class="text-stone-500">Member's note</dt><dd>{{ payment.note }}</dd></div>{% endif %}{% if payment.decision_note %}<div class="sm:col-span-2"><dt class="text-stone-500">Decision note</dt><dd>{{ payment.decision_note }}</dd></div>{% endif %}</dl>
+    {% if payment.deposit %}<a href="{% url 'deposit_detail' payment.deposit.pk %}" class="btn-primary mt-5 w-fit">View receipt {{ payment.deposit.receipt_no }}</a>{% endif %}
+    {% if payment.status == 'pending' and is_member and my_member.pk == payment.member_id %}<form method="post" action="{% url 'payment_cancel' payment.pk %}" class="mt-5">{% csrf_token %}<button class="btn-secondary btn-sm">Cancel this payment</button></form>{% endif %}
+  </div>
+  {% if verify_form %}
+  <div class="space-y-4">
+    <form method="post" action="{% url 'payment_verify' payment.pk %}" class="card card-body space-y-3">{% csrf_token %}<h3 class="card-title">Verify &amp; confirm</h3><p class="text-xs text-stone-500">Check the TrxID in your {{ payment.get_method_display }} statement first. Confirming creates the deposit and sends the receipt SMS.</p>{% include "components/form.html" with form=verify_form cols=1 %}<button class="btn-success w-full">{% icon 'check' 'h-4 w-4' %} Confirm payment</button></form>
+    <form method="post" action="{% url 'payment_reject' payment.pk %}" class="card card-body space-y-3">{% csrf_token %}<h3 class="card-title">Reject</h3>{% include "components/form.html" with form=reject_form cols=1 %}<button class="btn-secondary w-full">Reject &amp; notify member</button></form>
+  </div>{% endif %}
+</div>
+{% endblock %}

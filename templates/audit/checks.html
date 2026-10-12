@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<form method="get" class="card card-body mb-5 flex flex-wrap items-end gap-3"><div><label class="ui-label">From</label>{{ form.start }}</div><div><label class="ui-label">To</label>{{ form.end }}</div><button class="btn-primary">Run tests</button>
+  <p class="basis-full text-xs text-stone-500">Read-only tests over the books and the audit trail. Run them as often as you like; to record findings and lock a period, open an <a class="link" href="{% url 'audit_engagements' %}">engagement</a>.</p></form>
+{% if summary %}<div class="mb-4 flex flex-wrap gap-3 text-sm"><span>{{ summary.passed }} of {{ summary.total }} tests passed</span><span>·</span><span>{{ summary.exceptions }} exceptions</span>
+  {% for sev, n in summary.by_severity.items %}{% if n %}<span>{% status_badge sev %} {{ n }}</span>{% endif %}{% endfor %}</div>{% endif %}
+{% include "audit/_results.html" %}
+{% endblock %}

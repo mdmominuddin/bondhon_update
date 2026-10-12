@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<a href="{% url 'pay' %}" class="btn-primary btn-sm">{% icon 'wallet' 'h-4 w-4' %} Deposit money</a>{% endblock %}
+{% block content %}
+<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Reference</th><th>Date</th><th>Method</th><th class="num">Amount</th><th>Status</th><th>Receipt</th></tr></thead>
+  <tbody>{% for p in page %}<tr><td><a class="link" href="{% url 'payment_detail' p.pk %}">{{ p.reference }}</a></td><td>{{ p.created_at|date:"d M Y" }}</td><td>{{ p.get_method_display }}</td><td class="num font-semibold">{{ p.amount|taka }}</td><td>{% status_badge p.status p.get_status_display %}</td><td>{% if p.deposit %}<a class="link" href="{% url 'deposit_detail' p.deposit.pk %}">{{ p.deposit.receipt_no }}</a>{% else %}-{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="6" class="py-10 text-center text-stone-500">You have not submitted any online payments.</td></tr>{% endfor %}</tbody></table></div>{% include "components/pagination.html" %}</div>
+{% endblock %}

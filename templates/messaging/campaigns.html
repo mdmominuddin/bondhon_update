@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>When</th><th>Name</th><th>Audience</th><th class="num">Recipients</th><th>By</th></tr></thead>
+  <tbody>{% for c in page %}<tr><td class="text-xs">{{ c.created_at|date:"d M Y h:i A" }}</td><td><a class="link" href="{% url 'campaign_detail' c.pk %}">{{ c.title|truncatechars:60 }}</a></td><td>{{ c.get_audience_display }}</td><td class="num">{{ c.total }}</td><td>{{ c.created_by|default:"-" }}</td></tr>
+  {% empty %}<tr><td colspan="5" class="py-10 text-center text-stone-500">No broadcast or custom messages yet.</td></tr>{% endfor %}</tbody></table></div>{% include "components/pagination.html" %}</div>
+{% endblock %}

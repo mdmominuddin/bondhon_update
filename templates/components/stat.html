@@ -1,0 +1,8 @@
+{% load bondhon_extras %}
+<div class="card card-body">
+  <div class="flex items-start justify-between">
+    <div><div class="stat-label">{{ label }}</div><div class="stat-value {{ tone }}">{{ value }}</div></div>
+    {% if icon_name %}<span class="rounded-lg p-2 {{ icon_bg|default:'bg-taupe-100 text-taupe-700' }}">{% icon icon_name %}</span>{% endif %}
+  </div>
+  {% if hint %}<div class="mt-2 text-xs text-stone-500">{{ hint }}</div>{% endif %}
+</div>

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block header_actions %}<form method="post">{% csrf_token %}<button class="btn-secondary btn-sm">Mark all read</button></form>{% endblock %}
+{% block content %}
+<div class="card divide-y divide-taupe-100">
+  {% for n in page %}
+  <div class="p-4 {% if not n.is_read %}bg-brand-50/50{% endif %}"><div class="flex justify-between text-sm"><span class="font-semibold text-stone-900">{{ n.title|default:"Notice" }}</span><span class="text-xs text-stone-500">{{ n.created_at|date:"d M Y, h:i A" }}</span></div><p class="mt-1 text-sm text-stone-700">{{ n.message }}</p></div>
+  {% empty %}<div class="p-10 text-center text-stone-500">No notifications yet.</div>{% endfor %}
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

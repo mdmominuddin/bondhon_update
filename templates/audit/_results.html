@@ -1,0 +1,17 @@
+{% load bondhon_extras %}
+<div class="space-y-3">
+{% for r in results %}
+  <div class="card" x-data="{ open: false }">
+    <div class="flex flex-wrap items-center gap-3 p-4">
+      <span class="flex h-7 w-7 items-center justify-center rounded-full {% if r.passed %}bg-emerald-50 text-emerald-700{% else %}bg-rose-50 text-rose-700{% endif %}">{% if r.passed %}{% icon 'check' 'h-4 w-4' %}{% else %}{% icon 'warn' 'h-4 w-4' %}{% endif %}</span>
+      <div class="min-w-0 flex-1"><div class="font-medium text-stone-900">{{ r.title }}</div><div class="text-xs text-stone-500">{{ r.description }}</div></div>
+      {% if r.passed %}{% badge "Passed" "success" %}{% else %}{% status_badge r.severity %}<span class="text-sm font-semibold text-stone-700">{{ r.count }} exception{{ r.count|pluralize }}</span>
+        <button @click="open = !open" class="btn-secondary btn-sm">Details</button>
+        {% if engagement and not engagement.locked and can_audit %}<form method="post" action="{% url 'audit_raise_finding' engagement.pk %}">{% csrf_token %}<input type="hidden" name="code" value="{{ r.code }}"><button class="btn-secondary btn-sm">Raise finding</button></form>{% endif %}{% endif %}
+    </div>
+    {% if not r.passed %}<div x-show="open" x-cloak class="border-t border-taupe-100 bg-taupe-50/50 px-4 py-3"><ul class="space-y-1.5 text-sm">
+      {% for i in r.items %}<li><span class="font-medium">{% if i.url %}<a class="link" href="{{ i.url }}">{{ i.ref }}</a>{% else %}{{ i.ref }}{% endif %}</span> <span class="text-stone-600">- {{ i.detail }}</span></li>{% endfor %}
+      {% if r.count > r.items|length %}<li class="text-xs text-stone-500">… and {{ r.count|add:"-60" }} more (showing the first {{ r.items|length }}).</li>{% endif %}</ul></div>{% endif %}
+  </div>
+{% endfor %}
+</div>

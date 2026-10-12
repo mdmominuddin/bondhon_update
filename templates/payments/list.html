@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="mb-5 grid gap-4 sm:grid-cols-2">{% include "components/stat.html" with label="Waiting for verification" value=pending_count tone="text-amber-700" icon_name="warn" icon_bg="bg-amber-50 text-amber-700" %}{% include "components/stat.html" with label="Amount waiting" value=pending_total|taka0 %}</div>
+<form method="get" class="card card-body mb-5 flex flex-wrap items-end gap-3"><div class="min-w-[14rem] flex-1"><label class="ui-label">Search</label><input name="q" value="{{ q }}" class="ui-input" placeholder="Reference, TrxID, member, number"></div>
+  <div><label class="ui-label">Status</label><select name="status" class="ui-select"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div><button class="btn-primary">Filter</button></form>
+<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Reference</th><th>Member</th><th>Method / TrxID</th><th class="num">Amount</th><th>Submitted</th><th>Status</th></tr></thead>
+  <tbody>{% for p in page %}<tr><td><a class="link" href="{% url 'payment_detail' p.pk %}">{{ p.reference }}</a></td><td>{{ p.member.name }}</td><td>{{ p.get_method_display }}<div class="font-mono text-xs text-stone-400">{{ p.trx_id }}</div></td><td class="num font-semibold">{{ p.amount|taka }}</td><td class="text-xs">{{ p.created_at|date:"d M Y h:i A" }}</td><td>{% status_badge p.status p.get_status_display %}</td></tr>
+  {% empty %}<tr><td colspan="6" class="py-10 text-center text-stone-500">No member payments.</td></tr>{% endfor %}</tbody></table></div>{% include "components/pagination.html" %}</div>
+{% endblock %}

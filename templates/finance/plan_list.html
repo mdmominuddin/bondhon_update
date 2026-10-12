@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}{% if is_admin %}<a href="{% url 'create_contribution_plan' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} New plan</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="mb-5 grid gap-4 sm:grid-cols-3">
+  {% include "components/stat.html" with label="Per share (all plans)" value=per_share|taka0 %}
+  {% include "components/stat.html" with label="Active shares" value=shares %}
+  {% include "components/stat.html" with label="Total expected" value=per_share|taka0 hint="Per share × active shares" %}
+</div>
+<div class="card"><div class="table-wrap"><table class="tbl">
+  <thead><tr><th>Contribution</th><th>Period</th><th class="num">Per share</th><th class="num">Expected from all members</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td class="font-medium">{{ r.plan.description }}</td><td>{{ r.plan.start_date|date:"d M Y" }} → {{ r.plan.end_date|date:"d M Y" }}</td><td class="num">{{ r.plan.amount|taka0 }}</td><td class="num">{{ r.expected|taka0 }}</td>
+    <td class="text-right">{% if is_admin %}<a class="link" href="{% url 'contribution_plan_detail' r.plan.pk %}">Edit</a>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="5" class="py-10 text-center text-stone-500">No plans yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

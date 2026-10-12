@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<form method="post" class="grid gap-6 xl:grid-cols-3" x-data="composer()" x-init="init()">{% csrf_token %}
+  <div class="card card-body space-y-5 xl:col-span-2">
+    {% if test_mode %}<div class="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Test mode is on - messages are logged, not delivered.</div>{% endif %}
+    {% if form.non_field_errors %}<div class="rounded-lg bg-rose-50 p-3 text-sm text-rose-800">{{ form.non_field_errors }}</div>{% endif %}
+    <div><label class="ui-label">Send to</label><div class="space-y-1.5 rounded-lg border border-taupe-200 bg-white p-3 text-sm">{% for opt in form.audience %}<label class="flex items-center gap-2">{{ opt.tag }} {{ opt.choice_label }}</label>{% endfor %}</div></div>
+    <div><label class="ui-label">Recipients <span class="font-normal text-stone-400">(used when “Selected members” is chosen)</span></label>
+      <select name="members" multiple size="8" class="ui-select">{% for m in form.members.field.queryset %}<option value="{{ m.pk }}" >{{ m.name }} - {{ m.phone_number }}</option>{% endfor %}</select>
+      {% for e in form.members.errors %}<p class="mt-1 text-xs text-rose-600">{{ e }}</p>{% endfor %}<p class="mt-1 text-xs text-stone-400">Hold Ctrl / Cmd to pick several.</p></div>
+    <div class="grid gap-4 sm:grid-cols-2"><div><label class="ui-label">Start from a template</label><select name="template" class="ui-select" @change="useTemplate($event.target.value)">{% for v, l in form.template.field.choices %}<option value="{{ v }}" {% if form.template.value|stringformat:"s" == v|stringformat:"s" %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+      <div><label class="ui-label">Name (for your records)</label>{{ form.title }}</div></div>
+    <div><label class="ui-label">Message</label><textarea name="body" id="id_body" rows="6" class="ui-textarea" x-model="body" @input.debounce.300ms="refresh()" required>{{ form.body.value|default:"" }}</textarea>
+      {% for e in form.body.errors %}<p class="mt-1 text-xs text-rose-600">{{ e }}</p>{% endfor %}
+      <div class="mt-1 flex justify-between text-xs text-stone-500"><span x-text="length + ' characters · ' + segments + ' SMS part' + (segments === 1 ? '' : 's') + ' · ' + (encoding === 'unicode' ? 'Unicode (Bangla)' : 'standard')"></span><span x-show="encoding === 'unicode'" x-cloak>Bangla/Unicode: 70 characters per part</span></div></div>
+    <div class="flex gap-3"><button class="btn-primary" onclick="return confirm('Send this message now?')">{% icon 'chat' 'h-4 w-4' %} Send</button><a href="{% url 'messaging_home' %}" class="btn-secondary">Cancel</a></div>
+  </div>
+  <div class="space-y-5">
+    <div class="card card-body"><h2 class="card-title">Preview</h2><p class="mt-1 text-xs text-stone-500">Shown for {{ sample.name|default:"a sample member" }}.</p>
+      <div class="mt-3 min-h-[5rem] whitespace-pre-line rounded-2xl rounded-tl-sm bg-taupe-100 p-3 text-sm" x-text="preview || 'Your message will appear here…'"></div></div>
+    <div class="card card-body"><h2 class="card-title">Placeholders</h2><p class="mt-1 text-xs text-stone-500">Click to insert. Filled in per member.</p>
+      <div class="mt-3 flex flex-wrap gap-1.5">{% for k, d in placeholders.items %}<button type="button" title="{{ d }}" @click="insert('{{ k }}')" class="rounded-md bg-taupe-100 px-2 py-1 font-mono text-xs text-taupe-800 hover:bg-taupe-200">{ {{ k }} }</button>{% endfor %}</div></div>
+  </div>
+</form>
+{{ templates_json|json_script:"tpl-data" }}
+<script>
+function composer() {
+  return { body: '', preview: '', length: 0, segments: 0, encoding: 'gsm', tpl: JSON.parse(document.getElementById('tpl-data').textContent),
+    init() { this.body = document.getElementById('id_body').value; this.refresh(); },
+    useTemplate(id) { if (id && this.tpl[id]) { this.body = this.tpl[id]; this.refresh(); } },
+    insert(k) { var el = document.getElementById('id_body'); var s = el.selectionStart || this.body.length; this.body = this.body.slice(0, s) + '{' + k + '}' + this.body.slice(el.selectionEnd || s); this.refresh(); },
+    refresh() { var self = this; fetch('{% url "sms_preview" %}?member={{ sample.pk|default:"" }}&body=' + encodeURIComponent(this.body)).then(function (r) { return r.json(); })
+      .then(function (d) { self.preview = d.text; self.length = d.length; self.segments = d.segments; self.encoding = d.encoding; }); } };
+}
+</script>
+{% endblock %}

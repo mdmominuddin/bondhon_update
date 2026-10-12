@@ -1,0 +1,110 @@
+{% load static bondhon_extras %}<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ page_title|default:"Bondhon" }}{% endblock %} · Bondhon MAS</title>
+  <link rel="icon" href="{% static 'image/bondhonlogo.png' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script defer src="{% static 'vendor/alpine.min.js' %}"></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="h-full" x-data="{ sidebar: false }">
+{% if user.is_authenticated %}
+  {# ------------------------------ mobile overlay ------------------------------ #}
+  <div x-show="sidebar" x-cloak class="fixed inset-0 z-40 bg-stone-900/60 lg:hidden no-print" @click="sidebar = false"></div>
+
+  {# --------------------------------- sidebar --------------------------------- #}
+  <aside class="no-print fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col bg-taupe-950 transition-transform lg:translate-x-0"
+         :class="sidebar ? '!translate-x-0' : ''">
+    <div class="flex h-16 shrink-0 items-center gap-3 px-5">
+      <span class="flex h-10 w-12 items-center justify-center rounded-md bg-white p-1"><img src="{% static 'image/bondhonlogo.png' %}" alt="Bondhon" class="h-full object-contain"></span>
+      <div class="leading-tight"><div class="text-sm font-semibold text-white">Bondhon</div><div class="text-[11px] text-taupe-400">Management &amp; Auditing</div></div>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-3 pb-4">
+      {% url 'home' as u_home %}
+      <a href="{% url 'home' %}" class="nav-link {% if request.path == u_home %}nav-link-active{% endif %}">{% icon 'home' %} {% if is_office %}Dashboard{% else %}My account{% endif %}</a>
+
+      {% if is_member %}
+        <div class="nav-section">My money</div>
+        <a href="{% url 'pay' %}" class="nav-link {% if '/payments/deposit-money' in request.path %}nav-link-active{% endif %}">{% icon 'wallet' %} Deposit money</a>
+        <a href="{% url 'deposit_list' %}" class="nav-link {% if request.path == '/deposits/' %}nav-link-active{% endif %}">{% icon 'doc' %} My receipts</a>
+        <a href="{% url 'my_payments' %}" class="nav-link {% if '/payments/mine' in request.path %}nav-link-active{% endif %}">{% icon 'clipboard' %} My payments</a>
+        <a href="{% url 'notifications' %}" class="nav-link {% if '/me/notifications' in request.path %}nav-link-active{% endif %}">{% icon 'bell' %} Notifications
+          {% if unread_count %}<span class="ml-auto rounded-full bg-brand-600 px-2 py-0.5 text-[11px] font-semibold text-white">{{ unread_count }}</span>{% endif %}</a>
+        {% if site.members_see_expenses or is_office %}
+        <div class="nav-section">Society</div>
+        <a href="{% url 'monthly_summary' %}" class="nav-link {% if request.path == '/monthly-summary/' %}nav-link-active{% endif %}">{% icon 'chart' %} Monthly ledger</a>
+        {% if not is_office %}<a href="{% url 'expense_list' %}" class="nav-link {% if '/expenses' in request.path %}nav-link-active{% endif %}">{% icon 'arrow-up' %} Expenses</a>{% endif %}
+        {% endif %}
+      {% endif %}
+
+      {% if is_office %}
+        <div class="nav-section">Accounts</div>
+        <a href="{% url 'deposit_list' %}" class="nav-link {% if request.path == '/deposits/' or '/deposits/' in request.path %}nav-link-active{% endif %}">{% icon 'arrow-down' %} Deposits</a>
+        <a href="{% url 'expense_list' %}" class="nav-link {% if '/expenses' in request.path %}nav-link-active{% endif %}">{% icon 'arrow-up' %} Expenses</a>
+        <a href="{% url 'payment_list' %}" class="nav-link {% if request.path == '/payments/' or '/payments/' in request.path and 'mine' not in request.path and 'deposit-money' not in request.path %}nav-link-active{% endif %}">{% icon 'wallet' %} Member payments</a>
+        <a href="{% url 'members_with_dues' %}" class="nav-link {% if '/dues_list' in request.path %}nav-link-active{% endif %}">{% icon 'warn' %} Dues</a>
+
+        <div class="nav-section">Society</div>
+        <a href="{% url 'member_list' %}" class="nav-link {% if '/members' in request.path %}nav-link-active{% endif %}">{% icon 'users' %} Members</a>
+        <a href="{% url 'contribution_plan_list' %}" class="nav-link {% if 'contribution-plan' in request.path %}nav-link-active{% endif %}">{% icon 'clipboard' %} Contribution plans</a>
+        <a href="{% url 'project_list' %}" class="nav-link {% if '/projects' in request.path %}nav-link-active{% endif %}">{% icon 'building' %} Projects</a>
+        <a href="{% url 'reports' %}" class="nav-link {% if '/reports' in request.path or request.path == '/monthly-summary/' %}nav-link-active{% endif %}">{% icon 'chart' %} Reports</a>
+
+        <div class="nav-section">Messaging</div>
+        <a href="{% url 'messaging_home' %}" class="nav-link {% if request.path == '/messages/' %}nav-link-active{% endif %}">{% icon 'chat' %} Message center</a>
+        {% if can_finance %}<a href="{% url 'compose' %}" class="nav-link {% if '/messages/compose' in request.path %}nav-link-active{% endif %}">{% icon 'plus' %} Compose</a>{% endif %}
+        <a href="{% url 'sms_outbox' %}" class="nav-link {% if '/messages/outbox' in request.path %}nav-link-active{% endif %}">{% icon 'doc' %} Outbox</a>
+        <a href="{% url 'template_list' %}" class="nav-link {% if '/messages/templates' in request.path %}nav-link-active{% endif %}">{% icon 'clipboard' %} Templates</a>
+
+        <div class="nav-section">Auditing</div>
+        {% if can_audit %}<a href="{% url 'audit_overview' %}" class="nav-link {% if request.path == '/audit/' %}nav-link-active{% endif %}">{% icon 'shield' %} Audit overview</a>{% endif %}
+        <a href="{% url 'audit_engagements' %}" class="nav-link {% if '/audit/engagements' in request.path %}nav-link-active{% endif %}">{% icon 'clipboard' %} Engagements</a>
+        {% if can_audit %}
+        <a href="{% url 'audit_checks' %}" class="nav-link {% if '/audit/analytics' in request.path %}nav-link-active{% endif %}">{% icon 'chart' %} Analytics</a>
+        <a href="{% url 'audit_log' %}" class="nav-link {% if '/audit/log' in request.path %}nav-link-active{% endif %}">{% icon 'doc' %} Audit trail</a>
+        {% endif %}
+      {% endif %}
+
+      {% if is_admin %}
+        <div class="nav-section">Administration</div>
+        <a href="{% url 'user_list' %}" class="nav-link {% if '/users' in request.path %}nav-link-active{% endif %}">{% icon 'users' %} Users &amp; roles</a>
+        <a href="{% url 'site_settings' %}" class="nav-link {% if request.path == '/settings/' %}nav-link-active{% endif %}">{% icon 'cog' %} Settings</a>
+      {% endif %}
+
+      <div class="nav-section">Help</div>
+      <a href="{% url 'help_guide' %}" class="nav-link {% if request.path == '/help/' %}nav-link-active{% endif %}">{% icon 'doc' %} How to use</a>
+    </nav>
+    <div class="border-t border-white/10 p-3">
+      <div class="flex items-center gap-3 rounded-lg px-2 py-2">
+        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">{{ user.get_full_name|default:user.username|initials }}</span>
+        <div class="min-w-0 flex-1 leading-tight"><div class="truncate text-sm font-medium text-white">{{ user.get_full_name|default:user.username }}</div><div class="text-[11px] text-taupe-400">{{ role|default:"No role" }}</div></div>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="rounded-md p-1.5 text-taupe-300 hover:bg-white/10 hover:text-white" title="Sign out">{% icon 'logout' %}</button></form>
+      </div>
+      <a href="{% url 'password_change' %}" class="mt-1 block px-3 text-[11px] text-taupe-400 hover:text-white">Change password</a>
+    </div>
+  </aside>
+
+  {# ----------------------------------- main ----------------------------------- #}
+  <div class="lg:pl-64">
+    <header class="no-print sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-taupe-200 bg-white/90 px-4 backdrop-blur lg:px-8">
+      <button class="rounded-md p-1.5 text-stone-600 hover:bg-taupe-100 lg:hidden" @click="sidebar = true" aria-label="Open menu">{% icon 'menu' %}</button>
+      <h1 class="truncate text-base font-semibold text-stone-900">{{ page_title }}</h1>
+      <div class="ml-auto flex items-center gap-2">
+        {% block header_actions %}{% endblock %}
+        {% if is_member %}<a href="{% url 'notifications' %}" class="relative rounded-md p-1.5 text-stone-600 hover:bg-taupe-100" title="Notifications">{% icon 'bell' %}{% if unread_count %}<span class="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-brand-600 ring-2 ring-white"></span>{% endif %}</a>{% endif %}
+      </div>
+    </header>
+    <main class="mx-auto max-w-7xl px-4 py-6 lg:px-8">
+      {% include "components/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="no-print px-4 pb-6 text-center text-xs text-stone-400">{{ site.society_name }} · Bondhon Management &amp; Auditing System</footer>
+  </div>
+{% else %}
+  {% block public %}{% endblock %}
+{% endif %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

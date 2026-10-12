@@ -1,0 +1,15 @@
+{% load bondhon_extras %}
+{% if messages %}
+<div class="mb-5 space-y-2 no-print">
+  {% for message in messages %}
+  <div x-data="{ open: true }" x-show="open" class="flex items-start gap-3 rounded-lg border p-3 text-sm
+    {% if message.tags == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-800
+    {% elif message.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-800
+    {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-900
+    {% else %}border-sky-200 bg-sky-50 text-sky-800{% endif %}">
+    <div class="min-w-0 flex-1 break-words">{{ message }}</div>
+    <button @click="open = false" class="opacity-60 hover:opacity-100" aria-label="Dismiss">{% icon 'x' 'h-4 w-4' %}</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

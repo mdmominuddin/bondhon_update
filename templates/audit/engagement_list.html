@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}{% if can_audit %}<a href="{% url 'audit_engagement_add' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} New engagement</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>Audit</th><th>Period</th><th>Lead auditor</th><th>Status</th><th>Opinion</th><th class="num">Open findings</th></tr></thead>
+  <tbody>{% for e in engagements %}<tr><td><a class="link" href="{% url 'audit_engagement' e.pk %}">{{ e.title }}</a></td><td>{{ e.period_start|date:"d M Y" }} – {{ e.period_end|date:"d M Y" }}</td><td>{{ e.lead_auditor|default:"-" }}</td>
+    <td>{% status_badge e.status e.get_status_display %}{% if e.locked %} <span title="Period locked">🔒</span>{% endif %}</td><td class="text-xs">{{ e.get_opinion_display|default:"-" }}</td><td class="num">{{ e.open_findings }}</td></tr>
+  {% empty %}<tr><td colspan="6" class="py-10 text-center text-stone-500">No audits yet. An engagement defines a period, runs the analytics, records findings and finally locks the period.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

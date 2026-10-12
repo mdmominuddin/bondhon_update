@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block content %}
+<div class="mx-auto max-w-md"><div class="card card-body text-center"><div class="mx-auto mb-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">SANDBOX - no real money</div>
+  <h2 class="mt-2 text-xl font-semibold">Pay {{ payment.amount|taka }}</h2><p class="text-sm text-stone-500">Reference {{ payment.reference }}</p>
+  <div class="mt-6 space-y-3"><a class="btn-success w-full" href="{% url 'payment_sandbox_return' payment.reference %}?status=success&sig={{ sig.success }}">Simulate successful payment</a>
+    <a class="btn-secondary w-full" href="{% url 'payment_sandbox_return' payment.reference %}?status=failed&sig={{ sig.failed }}">Simulate failure</a>
+    <a class="btn-secondary w-full" href="{% url 'payment_sandbox_return' payment.reference %}?status=cancelled&sig={{ sig.cancelled }}">Cancel</a></div></div></div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<a href="{% url 'audit_engagement_report' engagement.pk %}" class="btn-secondary btn-sm">{% icon 'doc' 'h-4 w-4' %} Report</a>{% if can_audit and not engagement.locked %}<a href="{% url 'audit_engagement_edit' engagement.pk %}" class="btn-secondary btn-sm">Edit</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-center gap-3"><h2 class="text-xl font-semibold">{{ engagement.title }}</h2>{% status_badge engagement.status engagement.get_status_display %}{% if engagement.locked %}<span class="text-sm text-stone-500">🔒 period locked</span>{% endif %}
+  <span class="text-sm text-stone-500">{{ engagement.period_start|date:"d M Y" }} – {{ engagement.period_end|date:"d M Y" }}</span></div>
+<div class="no-print mb-6 flex gap-1 overflow-x-auto border-b border-taupe-200 text-sm">
+  {% for key, label in tabs %}<a href="?tab={{ key }}" class="whitespace-nowrap border-b-2 px-4 py-2 font-medium {% if tab == key %}border-brand-600 text-brand-700{% else %}border-transparent text-stone-500 hover:text-stone-800{% endif %}">{{ label }}</a>{% endfor %}
+</div>
+
+{% if tab == "overview" %}
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  {% include "components/stat.html" with label="Opening balance" value=ledger.opening|taka0 %}
+  {% include "components/stat.html" with label="Deposits" value=ledger.deposits|taka0 tone="text-emerald-700" %}
+  {% include "components/stat.html" with label="Expenses" value=ledger.expenses|taka0 tone="text-rose-700" %}
+  {% include "components/stat.html" with label="Closing balance" value=ledger.closing|taka0 %}
+</div>
+<div class="mt-6 grid gap-6 lg:grid-cols-2">
+  <div class="card card-body text-sm"><h3 class="card-title">Scope</h3><p class="mt-2 whitespace-pre-line text-stone-700">{{ engagement.scope|default:"Not specified." }}</p><dl class="mt-4 space-y-2"><div class="flex justify-between"><dt class="text-stone-500">Lead auditor</dt><dd>{{ engagement.lead_auditor|default:"-" }}</dd></div><div class="flex justify-between"><dt class="text-stone-500">Records in period</dt><dd>{{ ledger.deposit_count }} deposits · {{ ledger.expense_count }} expenses</dd></div></dl></div>
+  <div class="card card-body text-sm"><h3 class="card-title">Progress</h3><ul class="mt-3 space-y-2">
+    <li class="flex justify-between"><span>Analytics last run</span><span>{% if engagement.last_check_run %}{{ engagement.last_check_run|date:"d M Y h:i A" }}{% else %}never{% endif %}</span></li>
+    <li class="flex justify-between"><span>Findings</span><span>{{ findings|length }} ({{ engagement.open_findings }} open)</span></li>
+    <li class="flex justify-between"><span>Physical counts recorded</span><span>{{ recon|length }}</span></li>
+    {% if engagement.locked %}<li class="flex justify-between"><span>Opinion</span><span class="font-medium">{{ engagement.get_opinion_display }}</span></li>{% endif %}</ul></div>
+</div>
+{% endif %}
+
+{% if tab == "checks" %}
+  {% if results %}
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3"><div class="text-sm">{{ summary.passed }} of {{ summary.total }} tests passed · {{ summary.exceptions }} exceptions</div>
+    {% if can_audit and not engagement.locked %}<form method="post" action="{% url 'audit_engagement_checks' engagement.pk %}">{% csrf_token %}<button class="btn-secondary btn-sm">Save this run to the engagement</button></form>{% endif %}</div>
+  {% include "audit/_results.html" %}
+  {% else %}<div class="card card-body text-center text-stone-500">Only auditors and administrators can run the analytics.</div>{% endif %}
+{% endif %}
+
+{% if tab == "findings" %}
+  <div class="mb-4 flex justify-end">{% if can_audit and not engagement.locked %}<a href="{% url 'audit_finding_add' engagement.pk %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} Add finding</a>{% endif %}</div>
+  <div class="space-y-3">{% for f in findings %}
+    <div class="card card-body"><div class="flex flex-wrap items-start justify-between gap-3"><div><div class="flex flex-wrap items-center gap-2">{% status_badge f.severity %}{% status_badge f.status f.get_status_display %}<span class="text-xs text-stone-500">{{ f.get_category_display }}{% if f.reference %} · {{ f.reference }}{% endif %}</span></div><h3 class="mt-2 font-semibold">{{ f.title }}</h3></div>
+      <div class="flex gap-3 text-sm">{% if can_audit and not engagement.locked %}<a class="link" href="{% url 'audit_finding_edit' f.pk %}">Edit</a>{% endif %}{% if can_finance %}<a class="link" href="{% url 'audit_finding_respond' f.pk %}">Respond</a>{% endif %}</div></div>
+      <p class="mt-2 whitespace-pre-line text-sm text-stone-700">{{ f.description }}</p>
+      {% if f.recommendation %}<p class="mt-2 text-sm"><b>Recommendation:</b> {{ f.recommendation }}</p>{% endif %}
+      {% if f.management_response %}<div class="mt-3 rounded-lg bg-taupe-50 p-3 text-sm"><b>Management response:</b> {{ f.management_response }}</div>{% endif %}</div>
+  {% empty %}<div class="card card-body text-center text-stone-500">No findings recorded.</div>{% endfor %}</div>
+{% endif %}
+
+{% if tab == "reconciliation" %}
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="card lg:col-span-2"><div class="px-5 pt-5"><h2 class="card-title">Physical verification vs books</h2><p class="mt-1 text-xs text-stone-500">Record what was actually counted (cash, bank, wallet balances). The total is compared with the book balance at period end.</p></div>
+    <div class="table-wrap mt-3"><table class="tbl"><thead><tr><th>Counted on</th><th>Item</th><th>Type</th><th class="num">Amount</th><th></th></tr></thead>
+      <tbody>{% for r in recon %}<tr><td>{{ r.counted_on|date:"d M Y" }}</td><td>{{ r.label }}{% if r.note %}<div class="text-xs text-stone-400">{{ r.note }}</div>{% endif %}</td><td>{{ r.get_kind_display }}</td><td class="num">{{ r.amount|taka }}</td>
+        <td class="text-right">{% if can_audit and not engagement.locked %}<form method="post" action="{% url 'audit_recon_delete' r.pk %}">{% csrf_token %}<button class="text-xs text-stone-400 hover:text-rose-700">Remove</button></form>{% endif %}</td></tr>
+      {% empty %}<tr><td colspan="5" class="py-8 text-center text-stone-500">No counts recorded.</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><td colspan="3">Total counted</td><td class="num">{{ counted|taka }}</td><td></td></tr><tr><td colspan="3">Book balance at {{ engagement.period_end|date:"d M Y" }}</td><td class="num">{{ book|taka }}</td><td></td></tr>
+        <tr><td colspan="3">Variance (counted − book)</td><td class="num {% if variance != 0 %}text-rose-700{% else %}text-emerald-700{% endif %}">{{ variance|taka }}</td><td></td></tr></tfoot></table></div></div>
+  {% if can_audit and not engagement.locked %}<form method="post" action="{% url 'audit_recon_add' engagement.pk %}" class="card card-body">{% csrf_token %}<h2 class="card-title mb-3">Add a count</h2>{% include "components/form.html" with form=recon_form cols=1 %}<button class="btn-primary mt-4">Add</button></form>{% endif %}
+</div>
+{% endif %}
+
+{% if tab == "close" %}
+<div class="mx-auto max-w-2xl space-y-5">
+  {% if engagement.locked %}
+    <div class="card card-body"><h2 class="card-title">Closed and signed off</h2><dl class="mt-3 space-y-2 text-sm"><div class="flex justify-between"><dt class="text-stone-500">Opinion</dt><dd class="font-medium">{{ engagement.get_opinion_display }}</dd></div><div class="flex justify-between"><dt class="text-stone-500">Closed by</dt><dd>{{ engagement.closed_by }} · {{ engagement.closed_at|date:"d M Y" }}</dd></div></dl><p class="mt-3 whitespace-pre-line text-sm text-stone-700">{{ engagement.conclusion }}</p></div>
+    {% if is_admin %}<form method="post" action="{% url 'audit_engagement_reopen' engagement.pk %}" class="card card-body space-y-3">{% csrf_token %}<h3 class="font-semibold text-rose-700">Re-open this audit</h3><p class="text-xs text-stone-500">Unlocks the period so records can change. The reason is written to the audit trail.</p><input name="reason" class="ui-input" placeholder="Reason for re-opening" required><button class="btn-danger">Re-open</button></form>{% endif %}
+  {% elif can_audit %}
+    <form method="post" action="{% url 'audit_engagement_close' engagement.pk %}" class="card card-body">{% csrf_token %}<h2 class="card-title">Sign off &amp; lock the period</h2>
+      <p class="mb-4 mt-1 text-sm text-stone-500">{{ engagement.open_findings }} finding(s) still open. Closing records the opinion, freezes a ledger snapshot and locks every deposit and expense dated {{ engagement.period_start|date:"d M Y" }} – {{ engagement.period_end|date:"d M Y" }}.</p>
+      {% include "components/form.html" with form=close_form cols=1 %}<button class="btn-primary mt-5">Close audit</button></form>
+  {% else %}<div class="card card-body text-center text-stone-500">Only the auditor can close an audit.</div>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<a href="{% url 'user_add' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} New user</a>{% endblock %}
+{% block content %}
+<div class="mb-5 grid gap-3 md:grid-cols-4">{% for r, d in role_descriptions.items %}<div class="card card-body"><div class="text-sm font-semibold text-brand-700">{{ r }}</div><p class="mt-1 text-xs text-stone-500">{{ d }}</p></div>{% endfor %}</div>
+<div class="card"><div class="table-wrap"><table class="tbl">
+  <thead><tr><th>User</th><th>Roles</th><th>Linked member</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+  <tbody>{% for u in users %}<tr><td><div class="font-medium">{{ u.username }}</div><div class="text-xs text-stone-500">{{ u.get_full_name|default:u.email }}</div></td>
+    <td>{% for g in u.groups.all %}{% badge g.name "brand" %} {% endfor %}{% if u.is_superuser %}{% badge "Superuser" "warning" %}{% endif %}</td>
+    <td>{{ u.member_profile.name|default:"-" }}</td><td class="text-xs text-stone-500">{{ u.last_login|date:"d M Y h:i A"|default:"never" }}</td>
+    <td>{% if u.is_active %}{% badge "Active" "success" %}{% else %}{% badge "Disabled" "neutral" %}{% endif %}</td>
+    <td class="whitespace-nowrap text-right"><a class="link" href="{% url 'user_edit' u.pk %}">Edit</a>
+      <form method="post" action="{% url 'user_reset_password' u.pk %}" class="inline" onsubmit="return confirm('Reset password for {{ u.username }}?')">{% csrf_token %}<button class="ml-3 text-xs font-medium text-stone-500 hover:text-rose-700">Reset password</button></form></td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endblock %}

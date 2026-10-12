@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}
+  {% if is_office %}<a href="?{% url_replace format='csv' %}" class="btn-secondary btn-sm">{% icon 'download' 'h-4 w-4' %} CSV</a>{% endif %}
+  <button onclick="window.print()" class="btn-secondary btn-sm">{% icon 'print' 'h-4 w-4' %} Print</button>
+  {% if can_finance %}<a href="{% url 'create_deposit' %}" class="btn-primary btn-sm">{% icon 'plus' 'h-4 w-4' %} New deposit</a>{% endif %}
+{% endblock %}
+{% block content %}
+<form method="get" class="card card-body no-print mb-5">
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div><label class="ui-label">Search</label><input name="q" value="{{ params.q }}" class="ui-input" placeholder="Receipt, name, TrxID"></div>
+    <div><label class="ui-label">From</label><input type="date" name="start" value="{{ params.start }}" class="ui-input"></div>
+    <div><label class="ui-label">To</label><input type="date" name="end" value="{{ params.end }}" class="ui-input"></div>
+    {% if is_office %}<div><label class="ui-label">Member</label><select name="member" class="ui-select"><option value="">All</option>{% for m in members %}<option value="{{ m.pk }}" {% if params.member == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.name }}</option>{% endfor %}</select></div>{% endif %}
+    <div><label class="ui-label">Fund head</label><select name="fund_head" class="ui-select"><option value="">All</option>{% for h in heads %}<option value="{{ h.pk }}" {% if params.fund_head == h.pk|stringformat:"s" %}selected{% endif %}>{{ h.name }}</option>{% endfor %}</select></div>
+    <div><label class="ui-label">Method</label><select name="method" class="ui-select"><option value="">All</option>{% for v, l in methods %}<option value="{{ v }}" {% if params.method == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div><label class="ui-label">Source</label><select name="source" class="ui-select"><option value="">All</option><option value="admin" {% if params.source == 'admin' %}selected{% endif %}>Entered by office</option><option value="online" {% if params.source == 'online' %}selected{% endif %}>Paid online</option></select></div>
+    <div class="flex items-end gap-3"><label class="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" name="void" value="1" class="ui-check" {% if params.void %}checked{% endif %}> Show voided</label><button class="btn-primary">Filter</button></div>
+  </div>
+</form>
+<div class="card">
+  <div class="flex items-center justify-between px-5 py-4"><div class="text-sm text-stone-600">{{ count }} deposit{{ count|pluralize }}</div><div class="text-sm">Total <span class="text-lg font-bold text-emerald-700">{{ total|taka }}</span></div></div>
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Receipt</th><th>Date</th>{% if is_office %}<th>Member</th>{% endif %}<th>Fund</th><th>Method</th><th class="num">Amount</th><th></th></tr></thead>
+    <tbody>{% for d in page %}
+      <tr class="{% if d.is_void %}opacity-50{% endif %}"><td><a class="link" href="{% url 'deposit_detail' d.pk %}">{{ d.receipt_no }}</a></td><td>{{ d.date|date:"d M Y" }}</td>
+        {% if is_office %}<td><a href="{% url 'member_detail' d.member.pk %}" class="hover:text-brand-700">{{ d.member.name }}</a></td>{% endif %}
+        <td>{{ d.fund_head.name }}</td><td>{{ d.get_method_display }}{% if d.reference %}<div class="text-xs text-stone-400">{{ d.reference }}</div>{% endif %}</td>
+        <td class="num font-semibold {% if d.is_void %}line-through{% endif %}">{{ d.amount|taka }}</td>
+        <td>{% if d.is_void %}{% badge "Void" "danger" %}{% elif d.source == 'online' %}{% badge "Online" "info" %}{% endif %}</td></tr>
+    {% empty %}<tr><td colspan="7" class="py-10 text-center text-stone-500">No deposits match.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+</div>
+{% endblock %}

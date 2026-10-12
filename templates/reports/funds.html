@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load bondhon_extras %}
+{% block header_actions %}<button onclick="window.print()" class="btn-secondary btn-sm">{% icon 'print' 'h-4 w-4' %} Print</button>{% endblock %}
+{% block content %}
+<div class="card"><div class="table-wrap"><table class="tbl">
+  <thead><tr><th>Fund / head</th><th class="num">Deposits</th><th class="num">Expenses</th><th class="num">Balance</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td class="font-medium">{{ r.head.name }}</td><td class="num">{{ r.deposits|taka }}</td><td class="num">{{ r.expenses|taka }}</td><td class="num font-semibold {% if r.balance < 0 %}text-rose-700{% endif %}">{{ r.balance|taka }}</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td>Total</td><td class="num">{{ totals.deposits|taka }}</td><td class="num">{{ totals.expenses|taka }}</td><td></td></tr></tfoot>
+</table></div></div>
+<p class="mt-3 text-xs text-stone-500">A negative balance means more was spent against a head than was collected for it - often a sign deposits and expenses are mapped to different heads.</p>
+{% endblock %}
